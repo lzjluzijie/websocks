@@ -2,11 +2,12 @@ package core
 
 import (
 	"encoding/gob"
-	"golang.org/x/net/websocket"
 	"io"
 	"log"
 	"net"
 	"net/http"
+
+	"golang.org/x/net/websocket"
 )
 
 type Server struct {
@@ -14,34 +15,41 @@ type Server struct {
 }
 
 func handler(ws *websocket.Conn) {
-	dec := gob.NewDecoder(ws)
-	s := Socks5{}
-	err := dec.Decode(&s)
-	if err != nil {
-		log.Println(err.Error())
-	}
+	defer ws.Close()
 
-	log.Printf("Dial %s from %s",s.Addr, ws.RemoteAddr().String())
-	conn, err := net.Dial("tcp", s.Addr)
+	dec := gob.NewDecoder(ws)
+	req := Request{}
+	err := dec.Decode(&req)
 	if err != nil {
 		log.Println(err.Error())
 		return
 	}
 
+	log.Printf("Dial %s from %s", req.Addr, ws.RemoteAddr().String())
+	conn, err := net.Dial("tcp", req.Addr)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	defer conn.Close()
+
 	go func() {
 		_, err = io.Copy(conn, ws)
 		if err != nil {
 			log.Println(err)
+			return
 		}
 	}()
 
 	_, err = io.Copy(ws, conn)
 	if err != nil {
 		log.Println(err)
+		return
 	}
 }
 
-func (server *Server)Listen()(err error) {
+func (server *Server) Listen() (err error) {
 	http.Handle("/ws", websocket.Handler(handler))
 	err = http.ListenAndServe(server.ListenAddr, nil)
 	if err != nil {

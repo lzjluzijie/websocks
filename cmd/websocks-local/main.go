@@ -1,15 +1,16 @@
 package main
 
 import (
-	"github.com/lzjluzijie/websocks/core"
+	"flag"
 	"log"
 	"net"
-	"flag"
+
+	"github.com/lzjluzijie/websocks/core"
 )
 
 var l = flag.String("l", ":10801", "listening port")
-var url = flag.String("url", "ws://localhost:23333/ws", "url")
-var origin = flag.String("origin", "http://localhost/", "origin")
+var url = flag.String("u", "ws://localhost:23333/ws", "url")
+var origin = flag.String("o", "http://localhost/", "origin")
 
 func main() {
 	flag.Parse()
@@ -21,8 +22,8 @@ func main() {
 
 	local := core.Local{
 		ListenAddr: laddr,
-		URL: *url,
-		Origin: *origin,
+		URL:        *url,
+		Origin:     *origin,
 	}
 
 	err = local.Listen()
