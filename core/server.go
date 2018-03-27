@@ -3,32 +3,33 @@ package core
 import (
 	"encoding/gob"
 	"io"
-	"log"
 	"net"
 	"net/http"
 
+	"github.com/juju/loggo"
 	"golang.org/x/net/websocket"
 )
 
 type Server struct {
+	LogLevel   loggo.Level
 	ListenAddr string
 }
 
 func handler(ws *websocket.Conn) {
+	var err error
+	defer logger.Debugf(err.Error())
 	defer ws.Close()
 
 	dec := gob.NewDecoder(ws)
 	req := Request{}
-	err := dec.Decode(&req)
+	err = dec.Decode(&req)
 	if err != nil {
-		log.Println(err.Error())
 		return
 	}
 
-	log.Printf("Dial %s from %s", req.Addr, ws.RemoteAddr().String())
+	logger.Debugf("Dial %s from %s", req.Addr, ws.RemoteAddr().String())
 	conn, err := net.Dial("tcp", req.Addr)
 	if err != nil {
-		log.Println(err.Error())
 		return
 	}
 
@@ -37,19 +38,20 @@ func handler(ws *websocket.Conn) {
 	go func() {
 		_, err = io.Copy(conn, ws)
 		if err != nil {
-			log.Println(err)
+			logger.Debugf(err.Error())
 			return
 		}
 	}()
 
 	_, err = io.Copy(ws, conn)
 	if err != nil {
-		log.Println(err)
 		return
 	}
 }
 
 func (server *Server) Listen() (err error) {
+	logger.SetLogLevel(server.LogLevel)
+
 	http.Handle("/ws", websocket.Handler(handler))
 	err = http.ListenAndServe(server.ListenAddr, nil)
 	if err != nil {

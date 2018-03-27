@@ -3,67 +3,69 @@ package core
 import (
 	"encoding/gob"
 	"io"
-	"log"
 	"net"
 
+	"github.com/juju/loggo"
 	"golang.org/x/net/websocket"
 )
 
+var logger = loggo.GetLogger("core")
+
 type Local struct {
+	LogLevel   loggo.Level
 	ListenAddr *net.TCPAddr
-	LocalConn  chan *net.TCPConn
 	URL        string
 	Origin     string
 }
 
 func (local *Local) Listen() error {
+	logger.SetLogLevel(local.LogLevel)
+
 	listener, err := net.ListenTCP("tcp", local.ListenAddr)
 	if err != nil {
 		return err
 	}
-	log.Printf("Listening at: %s", local.ListenAddr.String())
 
 	defer listener.Close()
 
 	for {
 		conn, err := listener.AcceptTCP()
 		if err != nil {
-			log.Println(err)
+			logger.Debugf(err.Error())
 			continue
 		}
 
 		go local.handleConn(conn)
 	}
+
 	return nil
 }
 
 func (local *Local) handleConn(conn *net.TCPConn) (err error) {
+	defer logger.Debugf("Handle connection error: %s", err.Error())
 	defer conn.Close()
+
 	conn.SetLinger(0)
 
 	err = handShake(conn)
 	if err != nil {
-		log.Println(err)
 		return
 	}
 
 	_, host, err := getRequest(conn)
 	if err != nil {
-		log.Println(err)
 		return
 	}
 
-	log.Println(host)
+	logger.Debugf("Host: %s", host)
 
 	_, err = conn.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x08, 0x43})
 	if err != nil {
-		log.Println(err)
 		return
 	}
 
 	ws, err := websocket.Dial(local.URL, "", local.Origin)
 	if err != nil {
-		log.Println(err)
 		return
 	}
 
@@ -75,22 +77,22 @@ func (local *Local) handleConn(conn *net.TCPConn) (err error) {
 	}
 	err = enc.Encode(req)
 	if err != nil {
-		log.Println(err)
 		return
 	}
 
 	go func() {
 		_, err = io.Copy(ws, conn)
 		if err != nil {
-			log.Println(err)
+			logger.Debugf(err.Error())
 			return
 		}
+		return
 	}()
 
 	_, err = io.Copy(conn, ws)
 	if err != nil {
-		log.Println(err)
 		return
 	}
+
 	return
 }

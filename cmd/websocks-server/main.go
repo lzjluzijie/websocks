@@ -2,22 +2,25 @@ package main
 
 import (
 	"flag"
-	"log"
 
+	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
 )
 
-var l = flag.String("l", ":23333", "listening port")
+var l = flag.String("l", ":23333", "server listening port")
+
+var logger = loggo.GetLogger("server")
 
 func main() {
 	flag.Parse()
 
 	server := core.Server{
+		LogLevel:   loggo.DEBUG,
 		ListenAddr: *l,
 	}
-	log.Printf("Listening at %s", *l)
+	logger.Infof("Listening at %s", *l)
 	err := server.Listen()
 	if err != nil {
-		log.Println(err.Error())
+		logger.Errorf(err.Error())
 	}
 }
