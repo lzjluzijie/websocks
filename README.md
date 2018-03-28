@@ -4,7 +4,24 @@
 
 请注意，本项目目前还在开发中，仅供测试使用，更多功能仍在完善中。
 
-TO-DO
+### Example
+
+#### Server
+
+```
+go get -v github.com/lzjluzijie/websocks/cmd/websocks-server
+websocks-server -l :2333
+```
+
+#### Local
+
+```
+go get -v github.com/lzjluzijie/websocks/cmd/websocks-local
+websocks-local -l :1080 -o http://server.com -u ws://server.com:2333/ws
+```
+
+### TO-DO
+
  - [ ] Config
  - [ ] 优化代码
  - [ ] ws复用
@@ -16,4 +33,3 @@ TO-DO
 缺点
  - 可能比较慢
  - 配套软件差
- 
