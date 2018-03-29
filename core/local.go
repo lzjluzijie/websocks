@@ -5,10 +5,11 @@ import (
 	"io"
 	"net"
 
+	"errors"
+	"net/url"
+
 	"github.com/juju/loggo"
 	"golang.org/x/net/websocket"
-	"net/url"
-	"errors"
 )
 
 var logger = loggo.GetLogger("core")
@@ -56,7 +57,7 @@ func (local *Local) Listen() error {
 
 func (local *Local) handleConn(conn *net.TCPConn) (err error) {
 	defer func() {
-		if err != nil{
+		if err != nil {
 			logger.Debugf("Handle connection error: %s", err.Error())
 		}
 	}()

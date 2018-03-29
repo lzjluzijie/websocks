@@ -4,35 +4,45 @@ import (
 	"flag"
 	"net"
 
+	"net/url"
+
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
-	"net/url"
 )
 
-var l = flag.String("l", ":10801", "local listening port")
-var sURL = flag.String("u", "ws://localhost:23333/ws", "server url")
+var localAddr string
+var serverURL string
+var logLevel = loggo.INFO
+var debug bool
 
 var logger = loggo.GetLogger("local")
 
 func main() {
-	logger.SetLogLevel(loggo.DEBUG)
-
+	flag.StringVar(&serverURL, "u", "ws://localhost:23333/ws", "server url")
+	flag.StringVar(&localAddr, "l", ":10801", "local listening port")
+	flag.BoolVar(&debug, "debug", false, "debug mode")
+	if debug {
+		logLevel = loggo.DEBUG
+	}
 	flag.Parse()
 
-	u, err := url.Parse(*sURL)
+	logger.SetLogLevel(logLevel)
+	logger.Infof("Log level %s", logger.LogLevel().String())
+
+	u, err := url.Parse(serverURL)
 	if err != nil {
 		logger.Errorf(err.Error())
 		return
 	}
 
-	laddr, err := net.ResolveTCPAddr("tcp", *l)
+	lAddr, err := net.ResolveTCPAddr("tcp", localAddr)
 	if err != nil {
 		logger.Errorf(err.Error())
 	}
 
 	local := core.Local{
-		LogLevel:   loggo.DEBUG,
-		ListenAddr: laddr,
+		LogLevel:   logLevel,
+		ListenAddr: lAddr,
 		URL:        u,
 	}
 
