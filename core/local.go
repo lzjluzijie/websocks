@@ -7,6 +7,8 @@ import (
 
 	"github.com/juju/loggo"
 	"golang.org/x/net/websocket"
+	"net/url"
+	"errors"
 )
 
 var logger = loggo.GetLogger("core")
@@ -14,12 +16,23 @@ var logger = loggo.GetLogger("core")
 type Local struct {
 	LogLevel   loggo.Level
 	ListenAddr *net.TCPAddr
-	URL        string
+	URL        *url.URL
 	Origin     string
 }
 
 func (local *Local) Listen() error {
 	logger.SetLogLevel(local.LogLevel)
+
+	switch local.URL.Scheme {
+	case "ws":
+		local.Origin = "http://" + local.URL.Host
+	case "wss":
+		local.Origin = "https://" + local.URL.Host
+	default:
+		return errors.New("unknown scheme")
+	}
+
+	logger.Debugf(local.Origin)
 
 	listener, err := net.ListenTCP("tcp", local.ListenAddr)
 	if err != nil {
@@ -42,7 +55,12 @@ func (local *Local) Listen() error {
 }
 
 func (local *Local) handleConn(conn *net.TCPConn) (err error) {
-	defer logger.Debugf("Handle connection error: %s", err.Error())
+	defer func() {
+		if err != nil{
+			logger.Debugf("Handle connection error: %s", err.Error())
+		}
+	}()
+
 	defer conn.Close()
 
 	conn.SetLinger(0)
@@ -64,7 +82,7 @@ func (local *Local) handleConn(conn *net.TCPConn) (err error) {
 		return
 	}
 
-	ws, err := websocket.Dial(local.URL, "", local.Origin)
+	ws, err := websocket.Dial(local.URL.String(), "", local.Origin)
 	if err != nil {
 		return
 	}

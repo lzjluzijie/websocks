@@ -17,7 +17,16 @@ websocks-server -l :2333
 
 ```
 go get -v github.com/lzjluzijie/websocks/cmd/websocks-local
-websocks-local -l :1080 -o http://server.com -u ws://server.com:2333/ws
+websocks-local -l :1080 -u wss://server.com/ws
+```
+
+#### Caddyfile
+```
+https://server.com {
+  proxy /ws localhost:2333 {
+    websocket
+  }
+}
 ```
 
 ### TO-DO

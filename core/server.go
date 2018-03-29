@@ -17,7 +17,12 @@ type Server struct {
 
 func handler(ws *websocket.Conn) {
 	var err error
-	defer logger.Debugf(err.Error())
+	defer func() {
+		if err != nil {
+			logger.Debugf(err.Error())
+		}
+	}()
+
 	defer ws.Close()
 
 	dec := gob.NewDecoder(ws)
