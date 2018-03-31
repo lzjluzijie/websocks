@@ -12,6 +12,7 @@ import (
 
 type Server struct {
 	LogLevel   loggo.Level
+	Pattern    string
 	ListenAddr string
 }
 
@@ -57,7 +58,7 @@ func handler(ws *websocket.Conn) {
 func (server *Server) Listen() (err error) {
 	logger.SetLogLevel(server.LogLevel)
 
-	http.Handle("/ws", websocket.Handler(handler))
+	http.Handle(server.Pattern, websocket.Handler(handler))
 	err = http.ListenAndServe(server.ListenAddr, nil)
 	if err != nil {
 		return err
