@@ -1,14 +1,14 @@
 ## WebSocks
 
-一个基于 WebSocket 的代理工具
+[中文说明](https://github.com/lzjluzijie/websocks/blob/master/README-zh.md)
 
-请注意，本项目目前还在开发中，更多功能仍在完善中。
+A secure proxy based on websocket.
 
-目前已经可以测试使用了，具体可以看下面的介绍。有任何问题或建议可以直接联系我[@halulu](https://t.me/halulu)
+This project is still working in progress, more features are still in development. If you are interested in this project, please star this project in order to support me. Thank you.
 
-开发记录可以看[我的博客](https://halu.lu/post/websocks-development/)
+If you have any problems or suggestions, please do not hesitate to submit issues or contact me @halulu
 
-### Example (Enable tls)
+### Example (Enable TLS)
 
 #### Server
 
@@ -35,14 +35,6 @@ https://server.com {
 
 ### TO-DO
 
- - [ ] Config
- - [ ] 优化代码
- - [ ] ws复用
-
-优点
- - ws+tls 不是伪装而是正经的网站，很隐蔽
- - 可以走CDN，根本不怕被墙
-
-缺点
- - 可能比较慢
- - 配套软件差
+ - [ ] Configuration
+ - [ ] Optimize code
+ - [ ] WebSocket mux
