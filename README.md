@@ -6,7 +6,14 @@ A secure proxy based on websocket.
 
 This project is still working in progress, more features are still in development. If you are interested in this project, please star this project in order to support me. Thank you.
 
-If you have any problems or suggestions, please do not hesitate to submit issues or contact me @halulu
+If you have any problems or suggestions, please do not hesitate to submit issues or contact me [@halulu](https://t.me/halulu)
+
+Advantages:
+
+- Using WebSocket and TLS which are very secure and difficult to be detected, same as regular HTTPS websites
+- Can be used with cdn such as cloudflare, not afraid of gfw at all!
+
+The disadvantage is that I have just started development, there is no GUI client, and features are not enough. I will appreciate if you can help me!
 
 ### Example (Enable TLS)
 
