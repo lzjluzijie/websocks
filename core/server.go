@@ -8,6 +8,7 @@ import (
 
 	"github.com/juju/loggo"
 	"golang.org/x/net/websocket"
+	"time"
 )
 
 type Server struct {
@@ -16,9 +17,15 @@ type Server struct {
 	ListenAddr string
 }
 
+var opened = 0
+var closed = 0
+var t time.Time
+
 func handler(ws *websocket.Conn) {
+	opened++
 	var err error
 	defer func() {
+		closed++
 		if err != nil {
 			logger.Debugf(err.Error())
 		}
@@ -57,6 +64,15 @@ func handler(ws *websocket.Conn) {
 
 func (server *Server) Listen() (err error) {
 	logger.SetLogLevel(server.LogLevel)
+
+	t = time.Now()
+
+	go func() {
+		for {
+			time.Sleep(time.Second)
+			logger.Debugf("%s: opened%d, closed%d", time.Since(t), opened, closed)
+		}
+	}()
 
 	http.Handle(server.Pattern, websocket.Handler(handler))
 	err = http.ListenAndServe(server.ListenAddr, nil)
