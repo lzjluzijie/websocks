@@ -8,6 +8,8 @@ import (
 	"errors"
 	"net/url"
 
+	"crypto/tls"
+
 	"github.com/juju/loggo"
 	"golang.org/x/net/websocket"
 )
@@ -15,13 +17,15 @@ import (
 var logger = loggo.GetLogger("core")
 
 type Local struct {
-	LogLevel   loggo.Level
-	ListenAddr *net.TCPAddr
-	URL        *url.URL
-	Origin     string
+	LogLevel     loggo.Level
+	ListenAddr   *net.TCPAddr
+	URL          *url.URL
+	Origin       string
+	InsecureCert bool
+	WSConfig     *websocket.Config
 }
 
-func (local *Local) Listen() error {
+func (local *Local) Listen() (err error) {
 	logger.SetLogLevel(local.LogLevel)
 
 	switch local.URL.Scheme {
@@ -34,6 +38,16 @@ func (local *Local) Listen() error {
 	}
 
 	logger.Debugf(local.Origin)
+
+	config, err := websocket.NewConfig(local.URL.String(), local.Origin)
+	if err != nil {
+		return
+	}
+	println(local.InsecureCert)
+	config.TlsConfig = &tls.Config{
+		InsecureSkipVerify: local.InsecureCert,
+	}
+	local.WSConfig = config
 
 	listener, err := net.ListenTCP("tcp", local.ListenAddr)
 	if err != nil {
@@ -83,7 +97,8 @@ func (local *Local) handleConn(conn *net.TCPConn) (err error) {
 		return
 	}
 
-	ws, err := websocket.Dial(local.URL.String(), "", local.Origin)
+	ws, err := websocket.DialConfig(local.WSConfig)
+
 	if err != nil {
 		return
 	}

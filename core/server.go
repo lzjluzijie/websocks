@@ -8,14 +8,18 @@ import (
 
 	"time"
 
+	"crypto/tls"
+
 	"github.com/juju/loggo"
 	"golang.org/x/net/websocket"
+	"k8s.io/client-go/util/cert"
 )
 
 type Server struct {
 	LogLevel   loggo.Level
 	Pattern    string
 	ListenAddr string
+	TLS        bool
 }
 
 var opened = 0
@@ -75,8 +79,38 @@ func (server *Server) Listen() (err error) {
 		}
 	}()
 
-	http.Handle(server.Pattern, websocket.Handler(handler))
-	err = http.ListenAndServe(server.ListenAddr, nil)
+	if !server.TLS {
+		http.Handle(server.Pattern, websocket.Handler(handler))
+		err = http.ListenAndServe(server.ListenAddr, nil)
+		if err != nil {
+			return err
+		}
+		return
+	}
+
+	println("tls")
+	c, k, err := cert.GenerateSelfSignedCertKey("baidu.com", nil, nil)
+	if err != nil {
+		return err
+	}
+
+	certificate, err := tls.X509KeyPair(c, k)
+	if err != nil {
+		return err
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle(server.Pattern, websocket.Handler(handler))
+
+	s := http.Server{
+		Addr: server.ListenAddr,
+		TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{certificate},
+		},
+		Handler: mux,
+	}
+
+	err = s.ListenAndServeTLS("", "")
 	if err != nil {
 		return err
 	}

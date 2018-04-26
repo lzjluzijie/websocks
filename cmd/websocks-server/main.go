@@ -32,12 +32,17 @@ func main() {
 			Name:  "debug",
 			Usage: "debug mode",
 		},
+		cli.BoolFlag{
+			Name:  "tls",
+			Usage: "enable built-in tls",
+		},
 	}
 
 	app.Action = func(c *cli.Context) (err error) {
 		debug := c.Bool("debug")
 		pattern := c.String("p")
 		listenAddr := c.String("l")
+		tls := c.Bool("tls")
 
 		if debug {
 			logger.SetLogLevel(loggo.DEBUG)
@@ -51,6 +56,7 @@ func main() {
 			LogLevel:   logger.LogLevel(),
 			Pattern:    pattern,
 			ListenAddr: listenAddr,
+			TLS:        tls,
 		}
 
 		logger.Infof("Listening at %s", listenAddr)

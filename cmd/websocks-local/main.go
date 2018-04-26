@@ -36,12 +36,21 @@ func main() {
 			Name:  "debug",
 			Usage: "debug mode",
 		},
+		cli.BoolFlag{
+			Name:  "insecure",
+			Usage: "InsecureSkipVerify: true",
+		},
 	}
 
 	app.Action = func(c *cli.Context) (err error) {
 		debug := c.Bool("debug")
 		serverURL := c.String("u")
 		localAddr := c.String("l")
+		insecureCert := false
+
+		if c.Bool("insecure") {
+			insecureCert = true
+		}
 
 		if debug {
 			logger.SetLogLevel(loggo.DEBUG)
@@ -63,9 +72,10 @@ func main() {
 		}
 
 		local := core.Local{
-			LogLevel:   logger.LogLevel(),
-			ListenAddr: lAddr,
-			URL:        u,
+			LogLevel:     logger.LogLevel(),
+			ListenAddr:   lAddr,
+			URL:          u,
+			InsecureCert: insecureCert,
 		}
 
 		err = local.Listen()
