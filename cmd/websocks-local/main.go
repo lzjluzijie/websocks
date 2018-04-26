@@ -1,55 +1,80 @@
 package main
 
 import (
-	"flag"
 	"net"
 
 	"net/url"
 
+	"os"
+
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
+	"github.com/urfave/cli"
 )
-
-var localAddr string
-var serverURL string
-var logLevel = loggo.INFO
-var debug bool
 
 var logger = loggo.GetLogger("local")
 
 func main() {
-	flag.StringVar(&serverURL, "u", "ws://localhost:23333/websocks", "server url")
-	flag.StringVar(&localAddr, "l", ":10801", "local listening port")
-	flag.BoolVar(&debug, "debug", false, "debug mode")
-	flag.Parse()
+	app := cli.NewApp()
+	app.Name = "WebSocks Server"
+	app.Version = "0.1.1"
+	app.Author = "Halulu"
+	app.Usage = "See https://github.com/lzjluzijie/websocks"
 
-	if debug {
-		logLevel = loggo.DEBUG
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "u",
+			Value: "ws://localhost:23333/websocks",
+			Usage: "server url",
+		},
+		cli.StringFlag{
+			Name:  "l",
+			Value: ":10801",
+			Usage: "local listening port",
+		},
+		cli.BoolFlag{
+			Name:  "debug",
+			Usage: "debug mode",
+		},
 	}
 
-	logger.SetLogLevel(logLevel)
-	logger.Infof("Log level %s", logger.LogLevel().String())
+	app.Action = func(c *cli.Context) (err error) {
+		debug := c.Bool("debug")
+		serverURL := c.String("u")
+		localAddr := c.String("l")
 
-	u, err := url.Parse(serverURL)
-	if err != nil {
-		logger.Errorf(err.Error())
+		if debug {
+			logger.SetLogLevel(loggo.DEBUG)
+		} else {
+			logger.SetLogLevel(loggo.INFO)
+		}
+
+		logger.Infof("Log level %s", logger.LogLevel().String())
+
+		u, err := url.Parse(serverURL)
+		if err != nil {
+			logger.Errorf(err.Error())
+			return
+		}
+
+		lAddr, err := net.ResolveTCPAddr("tcp", localAddr)
+		if err != nil {
+			logger.Errorf(err.Error())
+		}
+
+		local := core.Local{
+			LogLevel:   logger.LogLevel(),
+			ListenAddr: lAddr,
+			URL:        u,
+		}
+
+		err = local.Listen()
+		if err != nil {
+			logger.Errorf(err.Error())
+		}
 		return
 	}
 
-	lAddr, err := net.ResolveTCPAddr("tcp", localAddr)
-	if err != nil {
-		logger.Errorf(err.Error())
-	}
-
-	local := core.Local{
-		LogLevel:   logLevel,
-		ListenAddr: lAddr,
-		URL:        u,
-	}
-
-	err = local.Listen()
-	if err != nil {
-		logger.Errorf(err.Error())
-	}
+	app.Run(os.Args)
 
 }

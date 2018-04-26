@@ -1,40 +1,65 @@
 package main
 
 import (
-	"flag"
+	"os"
 
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
+	"github.com/urfave/cli"
 )
-
-var serverAddr string
-var pattern string
-var debug bool
-var logLevel = loggo.INFO
 
 var logger = loggo.GetLogger("server")
 
 func main() {
-	flag.StringVar(&serverAddr, "l", ":23333", "server listening port")
-	flag.StringVar(&pattern, "p", "/websocks", "server.com/pattern, like password, start with '/'")
-	flag.BoolVar(&debug, "debug", false, "debug mode")
-	flag.Parse()
+	app := cli.NewApp()
+	app.Name = "WebSocks Server"
+	app.Version = "0.1.1"
+	app.Author = "Halulu"
+	app.Usage = "See https://github.com/lzjluzijie/websocks"
 
-	if debug {
-		logLevel = loggo.DEBUG
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "l",
+			Value: ":23333",
+			Usage: "server listening port",
+		},
+		cli.StringFlag{
+			Name:  "p",
+			Value: "/websocks",
+			Usage: "server.com/pattern, like password, start with '/'",
+		},
+		cli.BoolFlag{
+			Name:  "debug",
+			Usage: "debug mode",
+		},
 	}
 
-	logger.SetLogLevel(logLevel)
-	logger.Infof("Log level %s", logger.LogLevel().String())
+	app.Action = func(c *cli.Context) (err error) {
+		debug := c.Bool("debug")
+		pattern := c.String("p")
+		listenAddr := c.String("l")
 
-	server := core.Server{
-		LogLevel:   loggo.DEBUG,
-		Pattern:    pattern,
-		ListenAddr: serverAddr,
+		if debug {
+			logger.SetLogLevel(loggo.DEBUG)
+		} else {
+			logger.SetLogLevel(loggo.INFO)
+		}
+
+		logger.Infof("Log level %s", logger.LogLevel().String())
+
+		server := core.Server{
+			LogLevel:   logger.LogLevel(),
+			Pattern:    pattern,
+			ListenAddr: listenAddr,
+		}
+
+		logger.Infof("Listening at %s", listenAddr)
+		err = server.Listen()
+		if err != nil {
+			logger.Errorf(err.Error())
+		}
+		return
 	}
-	logger.Infof("Listening at %s", serverAddr)
-	err := server.Listen()
-	if err != nil {
-		logger.Errorf(err.Error())
-	}
+
+	app.Run(os.Args)
 }

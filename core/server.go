@@ -6,9 +6,10 @@ import (
 	"net"
 	"net/http"
 
+	"time"
+
 	"github.com/juju/loggo"
 	"golang.org/x/net/websocket"
-	"time"
 )
 
 type Server struct {
