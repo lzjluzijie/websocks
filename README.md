@@ -15,20 +15,18 @@ Advantages:
 
 The disadvantage is that I have just started development, there is no GUI client, and features are not enough. I will appreciate if you can help me!
 
-### Example (Enable TLS)
+### Example (Caddy TLS)
 
 #### Server
 
 ```
-go get -v github.com/lzjluzijie/websocks/cmd/websocks-server
-websocks-server -l :2333 -p /password
+./websocks server -l :2333 -p /password
 ```
 
 #### Local
 
 ```
-go get -v github.com/lzjluzijie/websocks/cmd/websocks-local
-websocks-local -l :1080 -u wss://server.com/password
+./websocks client -l :1080 -s wss://server.com/password
 ```
 
 #### Caddyfile

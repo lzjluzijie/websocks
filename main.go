@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"os"
 
+	"os/exec"
+
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
@@ -16,7 +18,8 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "WebSocks"
 	app.Version = "0.2.1"
-	app.Usage = "See https://github.com/lzjluzijie/websocks"
+	app.Usage = "A secure proxy based on websocket."
+	app.Description = "See https://github.com/lzjluzijie/websocks"
 	app.Author = "Halulu"
 	app.Email = "lzjluzijie@gmail.com"
 
@@ -111,7 +114,7 @@ func main() {
 					Usage: "enable built-in tls",
 				},
 			},
-			Action: func(c *cli.Context) error {
+			Action: func(c *cli.Context) (err error) {
 				debug := c.GlobalBool("debug")
 				listenAddr := c.String("l")
 				pattern := c.String("p")
@@ -133,12 +136,21 @@ func main() {
 				}
 
 				logger.Infof("Listening at %s", listenAddr)
-				err := server.Listen()
+				err = server.Listen()
 				if err != nil {
 					logger.Errorf(err.Error())
 				}
 
-				return nil
+				return
+			},
+		},
+		{
+			Name:    "github",
+			Aliases: []string{"github"},
+			Usage:   "open official github page",
+			Action: func(c *cli.Context) (err error) {
+				err = exec.Command("explorer", "https://github.com/lzjluzijie/websocks").Run()
+				return
 			},
 		},
 	}
