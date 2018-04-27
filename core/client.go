@@ -16,7 +16,7 @@ import (
 
 var logger = loggo.GetLogger("core")
 
-type Local struct {
+type Client struct {
 	LogLevel     loggo.Level
 	ListenAddr   *net.TCPAddr
 	URL          *url.URL
@@ -25,31 +25,31 @@ type Local struct {
 	WSConfig     *websocket.Config
 }
 
-func (local *Local) Listen() (err error) {
-	logger.SetLogLevel(local.LogLevel)
+func (client *Client) Listen() (err error) {
+	logger.SetLogLevel(client.LogLevel)
 
-	switch local.URL.Scheme {
+	switch client.URL.Scheme {
 	case "ws":
-		local.Origin = "http://" + local.URL.Host
+		client.Origin = "http://" + client.URL.Host
 	case "wss":
-		local.Origin = "https://" + local.URL.Host
+		client.Origin = "https://" + client.URL.Host
 	default:
 		return errors.New("unknown scheme")
 	}
 
-	logger.Debugf(local.Origin)
+	logger.Debugf(client.Origin)
 
-	config, err := websocket.NewConfig(local.URL.String(), local.Origin)
+	config, err := websocket.NewConfig(client.URL.String(), client.Origin)
 	if err != nil {
 		return
 	}
-	println(local.InsecureCert)
+	println(client.InsecureCert)
 	config.TlsConfig = &tls.Config{
-		InsecureSkipVerify: local.InsecureCert,
+		InsecureSkipVerify: client.InsecureCert,
 	}
-	local.WSConfig = config
+	client.WSConfig = config
 
-	listener, err := net.ListenTCP("tcp", local.ListenAddr)
+	listener, err := net.ListenTCP("tcp", client.ListenAddr)
 	if err != nil {
 		return err
 	}
@@ -63,13 +63,13 @@ func (local *Local) Listen() (err error) {
 			continue
 		}
 
-		go local.handleConn(conn)
+		go client.handleConn(conn)
 	}
 
 	return nil
 }
 
-func (local *Local) handleConn(conn *net.TCPConn) (err error) {
+func (client *Client) handleConn(conn *net.TCPConn) (err error) {
 	defer func() {
 		if err != nil {
 			logger.Debugf("Handle connection error: %s", err.Error())
@@ -97,7 +97,7 @@ func (local *Local) handleConn(conn *net.TCPConn) (err error) {
 		return
 	}
 
-	ws, err := websocket.DialConfig(local.WSConfig)
+	ws, err := websocket.DialConfig(client.WSConfig)
 
 	if err != nil {
 		return

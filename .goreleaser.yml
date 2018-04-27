@@ -1,21 +1,6 @@
 builds:
-- binary: websocks-local
-  main: ./cmd/websocks-local/main.go
-  goos:
-     - windows
-     - darwin
-     - linux
-     - freebsd
-  goarch:
-     - amd64
-     - 386
-     - arm
-     - arm64
-  goarm:
-    - 6
-    - 7
-- binary: websocks-server
-  main: ./cmd/websocks-server/main.go
+- binary: websocks
+  main: ./main.go
   goos:
      - windows
      - darwin
