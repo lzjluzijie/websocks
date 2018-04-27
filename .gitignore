@@ -2,3 +2,5 @@
 Caddyfile
 caddy.log
 dist
+websocks.cer
+websocks.key

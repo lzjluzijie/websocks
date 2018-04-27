@@ -7,9 +7,12 @@ import (
 
 	"os/exec"
 
+	"io/ioutil"
+
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
+	"k8s.io/client-go/util/cert"
 )
 
 var logger = loggo.GetLogger("websocks")
@@ -113,12 +116,24 @@ func main() {
 					Name:  "tls",
 					Usage: "enable built-in tls",
 				},
+				cli.StringFlag{
+					Name:  "cert",
+					Value: "websocks.cer",
+					Usage: "tls cert path",
+				},
+				cli.StringFlag{
+					Name:  "key",
+					Value: "websocks.key",
+					Usage: "tls key path",
+				},
 			},
 			Action: func(c *cli.Context) (err error) {
 				debug := c.GlobalBool("debug")
 				listenAddr := c.String("l")
 				pattern := c.String("p")
 				tls := c.Bool("tls")
+				certPath := c.String("cert")
+				keyPath := c.String("key")
 
 				if debug {
 					logger.SetLogLevel(loggo.DEBUG)
@@ -133,6 +148,8 @@ func main() {
 					Pattern:    pattern,
 					ListenAddr: listenAddr,
 					TLS:        tls,
+					CertPath:   certPath,
+					KeyPath:    keyPath,
 				}
 
 				logger.Infof("Listening at %s", listenAddr)
@@ -150,6 +167,37 @@ func main() {
 			Usage:   "open official github page",
 			Action: func(c *cli.Context) (err error) {
 				err = exec.Command("explorer", "https://github.com/lzjluzijie/websocks").Run()
+				return
+			},
+		},
+		{
+			Name:    "key",
+			Aliases: []string{"key"},
+			Usage:   "generate self signed cert and key",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "host",
+					Value: "baidu.com",
+					Usage: "certificate host",
+				},
+			},
+			Action: func(c *cli.Context) (err error) {
+				host := c.String("host")
+				certByte, keyByte, err := cert.GenerateSelfSignedCertKey(host, nil, nil)
+				if err != nil {
+					return err
+				}
+
+				err = ioutil.WriteFile("websocks.cer", certByte, 0600)
+				if err != nil {
+					return err
+				}
+
+				err = ioutil.WriteFile("websocks.key", keyByte, 0600)
+				if err != nil {
+					return err
+				}
+
 				return
 			},
 		},
