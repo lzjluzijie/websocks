@@ -43,7 +43,7 @@ func (client *Client) Listen() (err error) {
 	if err != nil {
 		return
 	}
-	println(client.InsecureCert)
+
 	config.TlsConfig = &tls.Config{
 		InsecureSkipVerify: client.InsecureCert,
 	}
