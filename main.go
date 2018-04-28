@@ -12,7 +12,6 @@ import (
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
-	"k8s.io/client-go/util/cert"
 )
 
 var logger = loggo.GetLogger("websocks")
@@ -20,7 +19,7 @@ var logger = loggo.GetLogger("websocks")
 func main() {
 	app := cli.NewApp()
 	app.Name = "WebSocks"
-	app.Version = "0.2.1"
+	app.Version = "0.2.2"
 	app.Usage = "A secure proxy based on websocket."
 	app.Description = "See https://github.com/lzjluzijie/websocks"
 	app.Author = "Halulu"
@@ -175,29 +174,24 @@ func main() {
 			Aliases: []string{"key"},
 			Usage:   "generate self signed cert and key",
 			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "host",
-					Value: "baidu.com",
-					Usage: "certificate host",
+				cli.StringSliceFlag{
+					Name:  "hosts",
+					Value: &cli.StringSlice{"github.com"},
+					Usage: "certificate hosts",
 				},
 			},
 			Action: func(c *cli.Context) (err error) {
-				host := c.String("host")
-				certByte, keyByte, err := cert.GenerateSelfSignedCertKey(host, nil, nil)
-				if err != nil {
-					return err
-				}
+				hosts := c.StringSlice("hosts")
 
-				err = ioutil.WriteFile("websocks.cer", certByte, 0600)
+				key, cert, err := core.GenP256(hosts)
+				err = ioutil.WriteFile("websocks.key", key, 0600)
 				if err != nil {
-					return err
+					return
 				}
-
-				err = ioutil.WriteFile("websocks.key", keyByte, 0600)
+				err = ioutil.WriteFile("websocks.cer", cert, 0600)
 				if err != nil {
-					return err
+					return
 				}
-
 				return
 			},
 		},
