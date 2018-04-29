@@ -211,6 +211,16 @@ function data_processing(){
 			clear_install
 			exit 1
 		fi
+		rm -rf  websocks_Linux_${system_bit}.tar.gz
+		if [[ $? -eq 0 ]];then
+			clear
+			echo -e "${ok_font}删除无用文件成功。"
+		else
+			clear
+			echo -e "${error_font}删除无用文件失败！"
+			clear_install
+			exit 1
+		fi
 		rm -rf LICENSE
 		if [[ $? -eq 0 ]];then
 			clear
@@ -879,7 +889,6 @@ function check_time(){
 function generate_base_config(){
 	clear
 	echo "正在生成基础信息中..."
-	hostname=$(hostname)
 	Address=$(curl https://ipinfo.io/ip)
 	UUID=$(cat /proc/sys/kernel/random/uuid)
 	let websocks_listen_port=$RANDOM+10000
