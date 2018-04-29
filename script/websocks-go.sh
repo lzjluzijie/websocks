@@ -275,7 +275,7 @@ function data_processing(){
 				clear_install
 				exit 1
 			fi
-			wget -O "/usr/local/caddy/Caddyfile" "https://raw.githubusercontent.com/1715173329/websocks-onekey/master/configs/websocks-tls-website.Caddyfile"
+			wget -O "/usr/local/caddy/Caddyfile" "https://raw.githubusercontent.com/lzjluzijie/websocks/master/script/configs/websocks-tls-website.Caddyfile"
 			if [[ $? -eq 0 ]];then
 				clear
 				echo -e "${ok_font}下载Caddy配置文件成功。"
@@ -362,7 +362,7 @@ function data_processing(){
 				Description=websocks
 				
 				[Service]
-				ExecStart=/usr/local/websocks/websocks server -l 127.0.0.1:${websocks_listen_port} -p /fuckgfw_gfwmotherfuckingboom/${UUID}
+				ExecStart=/usr/local/websocks/websocks server -l 127.0.0.1:${websocks_listen_port} -p /zhuji.lu/${UUID}
 				Restart=always
 				  
 				[Install]
@@ -407,7 +407,7 @@ function data_processing(){
 					clear_install
 					exit 1
 				fi
-				wget -O "/usr/local/websocks/pages/websocks-page.zip" "https://github.com/1715173329/websocks-onekey/blob/master/pages/websocks-page.zip?raw=true"
+				wget -O "/usr/local/websocks/pages/websocks-page.zip" "https://github.com/lzjluzijie/websocks/blob/master/script/pages/websocks-page.zip?raw=true"
 				if [[ $? -eq 0 ]];then
 					clear
 					echo -e "${ok_font}下载网页文件压缩包成功。"
@@ -519,7 +519,7 @@ function upgrade_shell_script(){
 	echo -e "正在更新脚本中..."
 	filepath=$(cd "$(dirname "$0")"; pwd)
 	filename=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
-	curl -O https://raw.githubusercontent.com/1715173329/websocks-onekey/master/websocks-go.sh
+	curl -O https://raw.githubusercontent.com/lzjluzijie/websocks/master/script/websocks-go.sh
 	if [[ $? -eq 0 ]];then
 		clear
 		echo -e "${ok_font}脚本更新成功，脚本位置：\"${green_backgroundcolor}${filename}/websocks-go.sh${default_fontcolor}\"，使用：\"${green_backgroundcolor}bash ${filename}/websocks-go.sh${default_fontcolor}\"。"
@@ -947,11 +947,11 @@ function open_port(){
 function echo_websocks_config(){
 	if [[ ${determine_type} = "1" ]]; then
 		clear
-		run_command="./websocks client -l 127.0.0.1:1080 -s wss://${install_domain}/fuckgfw_gfwmotherfuckingboom/${UUID}" 
+		run_command="./websocks client -l 127.0.0.1:1080 -s wss://${install_domain}/zhuji.lu/${UUID}" 
 		echo -e "您的连接信息如下："
 		echo -e "WSS地址：${install_domain}"
 		echo -e "端口(Port)：${install_port}"
-		echo -e "WSS目录：/fuckgfw_gfwmotherfuckingboom/${UUID}"
+		echo -e "WSS目录：/zhuji.lu/${UUID}"
 		echo -e "客户端运行指令：${green_backgroundcolor}${run_command}${default_fontcolor}"
 	fi
 	echo -e "${run_command}" > /usr/local/websocks/run_command.txt
