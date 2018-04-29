@@ -45,26 +45,26 @@ function check_os(){
 		exit 1
 	fi
 	clear
-	echo -e "正在检测系统位数是否被支持..."
+	echo -e "正在检测系统架构是否被支持..."
 	system_bit=$(uname -m)
 	if  [[ ${system_bit} = "x86_64" ]]; then
 		clear
-		echo -e "${ok_font}该脚本支持您的系统位数。"
+		echo -e "${ok_font}该脚本支持您的系统架构。"
 	elif [[ ${system_bit} = "i386" ]]; then
 		clear
-		echo -e "${ok_font}该脚本支持您的系统位数。"
+		echo -e "${ok_font}该脚本支持您的系统架构。"
 	elif [[ ${system_bit} = "i686" ]]; then
 		clear
-		echo -e "${ok_font}该脚本支持您的系统位数。"
+		echo -e "${ok_font}该脚本支持您的系统架构。"
 	elif [[ ${system_bit} = "x86" ]]; then
 		clear
-		echo -e "${ok_font}该脚本支持您的系统位数。"
+		echo -e "${ok_font}该脚本支持您的系统架构。"
 	elif [[ ${system_bit} = "arm64" ]]; then
 		clear
-		echo -e "${ok_font}该脚本支持您的系统位数。"
+		echo -e "${ok_font}该脚本支持您的系统架构。"
 	else
 		clear
-		echo -e "${error_font}目前暂不支持您使用的系统位数，推荐切换至Debian/Ubuntu x86_64。"
+		echo -e "${error_font}目前暂不支持您使用的系统架构，推荐切换至Debian/Ubuntu x86_64。"
 		exit 1
 	fi
 }
