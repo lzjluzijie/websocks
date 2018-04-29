@@ -14,6 +14,12 @@
 
 缺点就是刚刚开始开发，没有GUI客户端，功能也比较少，如果你能来帮我那就太好了！
 
+## 一键脚本
+### 项目首页:[1715173329/websocks-onekey](https://github.com/1715173329/websocks-onekey)
+```bash
+apt-get install -y curl && curl -O https://raw.githubusercontent.com/lzjluzijie/websocks/master/script/websocks-go.sh && bash websocks-go.sh
+```
+
 ### 示例 (开启 TLS)
 
 #### 服务端

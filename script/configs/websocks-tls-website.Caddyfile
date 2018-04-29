@@ -1,0 +1,12 @@
+http://WebsocksAddress {
+  timeouts none
+  redir https://WebsocksAddress{url}
+}
+https://WebsocksAddress
+{
+  root /usr/local/websocks/pages
+  tls /usr/local/websocks/pem.pem /usr/local/websocks/key.key
+  proxy /zhuji.lu/PathUUID localhost:WebsocksListenPort {
+    websocket
+  }
+}

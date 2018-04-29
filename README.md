@@ -15,6 +15,12 @@ Advantages:
 
 The disadvantage is that I have just started development, there is no GUI client, and features are not enough. I will appreciate if you can help me!
 
+## Quick use
+### Index:[1715173329/websocks-onekey](https://github.com/1715173329/websocks-onekey)
+```bash
+apt-get install -y curl && curl -O https://raw.githubusercontent.com/lzjluzijie/websocks/master/script/websocks-go.sh && bash websocks-go.sh
+```
+
 ### Example (Caddy TLS)
 
 #### Server
