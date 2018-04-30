@@ -1,6 +1,6 @@
 builds:
 - binary: websocks
-  main: ./main.go
+  main: ./websocks.go
   goos:
      - windows
      - darwin
