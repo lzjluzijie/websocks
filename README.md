@@ -40,15 +40,15 @@ https://server.com {
 }
 ```
 
-### Built-in TLS with fake server name
+### Built-in TLS with fake server name and reversing proxy
 
 #### Server
 ```
 ./websocks cert
-./websocks server -l :2333 -p /password --tls
+./websocks server -l :2333 -p /password --proxy https://www.centos.org/ --tls
 ```
 
 #### Local
 ```
-./websocks client -l :1080 -s wss://server.com:2333/password -n github.com --insecure
+./websocks client -l :1080 -s wss://the-real-server.com:2333/password -n www.centos.com --insecure
 ```

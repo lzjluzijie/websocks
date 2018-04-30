@@ -39,15 +39,15 @@ https://server.com {
 }
 ```
 
-### 内置 TLS 并混淆域名
+### 内置 TLS 混淆域名并反向代理
 
 #### 服务端
 ```
 ./websocks cert
-./websocks server -l :2333 -p /password --tls
+./websocks server -l :2333 -p /password --proxy https://www.centos.org/ --tls
 ```
 
 #### 客户端
 ```
-./websocks client -l :1080 -s wss://server.com:2333/password -n github.com --insecure
+./websocks client -l :1080 -s wss://server.com:2333/password -n www.centos.com --insecure
 ```
