@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -59,6 +60,53 @@ func GenP256(hosts []string) (key, cert []byte, err error) {
 	}
 
 	key = pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: x509Key})
+	cert = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: serverCert})
+	return
+}
+
+func GenRSA2048(hosts []string) (key, cert []byte, err error) {
+	notBefore := time.Now()
+	notAfter := notBefore.Add(time.Hour * 24 * 366)
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return
+	}
+	serverKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return
+	}
+
+	serverTemplate := x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization: []string{"WebSocks"},
+			CommonName:   "WebSocks Server CA",
+		},
+		NotBefore:             notBefore,
+		NotAfter:              notAfter,
+		KeyUsage:              x509.KeyUsageCertSign,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IsCA: true,
+	}
+
+	for _, host := range hosts {
+		if ip := net.ParseIP(host); ip != nil {
+			serverTemplate.IPAddresses = append(serverTemplate.IPAddresses, ip)
+		} else {
+			serverTemplate.DNSNames = append(serverTemplate.DNSNames, host)
+		}
+	}
+
+	serverCert, err := x509.CreateCertificate(rand.Reader, &serverTemplate, &serverTemplate, &serverKey.PublicKey, serverKey)
+	if err != nil {
+		return
+	}
+
+	x509Key := x509.MarshalPKCS1PrivateKey(serverKey)
+
+	key = pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509Key})
 	cert = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: serverCert})
 	return
 }

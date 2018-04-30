@@ -14,9 +14,10 @@ import (
 	"github.com/urfave/cli"
 )
 
-var logger = loggo.GetLogger("websocks")
-
 func main() {
+	logger := loggo.GetLogger("websocks")
+	logger.SetLogLevel(loggo.INFO)
+
 	app := cli.NewApp()
 	app.Name = "WebSocks"
 	app.Version = "0.3.0"
@@ -70,8 +71,6 @@ func main() {
 
 				if debug {
 					logger.SetLogLevel(loggo.DEBUG)
-				} else {
-					logger.SetLogLevel(loggo.INFO)
 				}
 
 				logger.Infof("Log level %s", logger.LogLevel().String())
@@ -148,8 +147,6 @@ func main() {
 
 				if debug {
 					logger.SetLogLevel(loggo.DEBUG)
-				} else {
-					logger.SetLogLevel(loggo.INFO)
 				}
 
 				logger.Infof("Log level %s", logger.LogLevel().String())
@@ -185,8 +182,12 @@ func main() {
 		{
 			Name:    "cert",
 			Aliases: []string{"cert"},
-			Usage:   "generate self signed cert and key",
+			Usage:   "generate self signed key and cert(default rsa 2048)",
 			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "ecdsa",
+					Usage: "generate ecdsa key and cert(P-256)",
+				},
 				cli.StringSliceFlag{
 					Name:  "hosts",
 					Value: nil,
@@ -194,9 +195,18 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) (err error) {
+				ecdsa := c.Bool("ecdsa")
 				hosts := c.StringSlice("hosts")
 
-				key, cert, err := core.GenP256(hosts)
+				var key, cert []byte
+				if ecdsa {
+					key, cert, err = core.GenP256(hosts)
+					logger.Infof("Generated ecdsa P-256 key and cert")
+				} else {
+					key, cert, err = core.GenRSA2048(hosts)
+					logger.Infof("Generated rsa 2048 key and cert")
+				}
+
 				err = ioutil.WriteFile("websocks.key", key, 0600)
 				if err != nil {
 					return
