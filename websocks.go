@@ -14,13 +14,14 @@ import (
 	"github.com/urfave/cli"
 )
 
-var logger = loggo.GetLogger("websocks")
-
 func main() {
+	logger := loggo.GetLogger("websocks")
+	logger.SetLogLevel(loggo.INFO)
+
 	app := cli.NewApp()
 	app.Name = "WebSocks"
-	app.Version = "0.2.2"
-	app.Usage = "A secure proxy based on websocket."
+	app.Version = "0.3.0"
+	app.Usage = "A secure proxy based on WebSocket."
 	app.Description = "See https://github.com/lzjluzijie/websocks"
 	app.Author = "Halulu"
 	app.Email = "lzjluzijie@gmail.com"
@@ -48,6 +49,11 @@ func main() {
 					Value: "ws://localhost:23333/websocks",
 					Usage: "server url",
 				},
+				cli.StringFlag{
+					Name:  "n",
+					Value: "",
+					Usage: "fake server name for tls client hello, leave blank to disable",
+				},
 				cli.BoolFlag{
 					Name:  "insecure",
 					Usage: "InsecureSkipVerify: true",
@@ -57,16 +63,14 @@ func main() {
 				debug := c.GlobalBool("debug")
 				listenAddr := c.String("l")
 				serverURL := c.String("s")
+				serverName := c.String("n")
 				insecureCert := false
-
 				if c.Bool("insecure") {
 					insecureCert = true
 				}
 
 				if debug {
 					logger.SetLogLevel(loggo.DEBUG)
-				} else {
-					logger.SetLogLevel(loggo.INFO)
 				}
 
 				logger.Infof("Log level %s", logger.LogLevel().String())
@@ -85,6 +89,7 @@ func main() {
 					LogLevel:     logger.LogLevel(),
 					ListenAddr:   lAddr,
 					URL:          u,
+					ServerName:   serverName,
 					InsecureCert: insecureCert,
 				}
 
@@ -125,6 +130,11 @@ func main() {
 					Value: "websocks.key",
 					Usage: "tls key path",
 				},
+				cli.StringFlag{
+					Name:  "proxy",
+					Value: "",
+					Usage: "reverse proxy url, leave blank to disable",
+				},
 			},
 			Action: func(c *cli.Context) (err error) {
 				debug := c.GlobalBool("debug")
@@ -133,11 +143,10 @@ func main() {
 				tls := c.Bool("tls")
 				certPath := c.String("cert")
 				keyPath := c.String("key")
+				proxy := c.String("proxy")
 
 				if debug {
 					logger.SetLogLevel(loggo.DEBUG)
-				} else {
-					logger.SetLogLevel(loggo.INFO)
 				}
 
 				logger.Infof("Log level %s", logger.LogLevel().String())
@@ -149,6 +158,7 @@ func main() {
 					TLS:        tls,
 					CertPath:   certPath,
 					KeyPath:    keyPath,
+					Proxy:      proxy,
 				}
 
 				logger.Infof("Listening at %s", listenAddr)
@@ -172,18 +182,31 @@ func main() {
 		{
 			Name:    "cert",
 			Aliases: []string{"cert"},
-			Usage:   "generate self signed cert and key",
+			Usage:   "generate self signed key and cert(default rsa 2048)",
 			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "ecdsa",
+					Usage: "generate ecdsa key and cert(P-256)",
+				},
 				cli.StringSliceFlag{
 					Name:  "hosts",
-					Value: &cli.StringSlice{"github.com"},
+					Value: nil,
 					Usage: "certificate hosts",
 				},
 			},
 			Action: func(c *cli.Context) (err error) {
+				ecdsa := c.Bool("ecdsa")
 				hosts := c.StringSlice("hosts")
 
-				key, cert, err := core.GenP256(hosts)
+				var key, cert []byte
+				if ecdsa {
+					key, cert, err = core.GenP256(hosts)
+					logger.Infof("Generated ecdsa P-256 key and cert")
+				} else {
+					key, cert, err = core.GenRSA2048(hosts)
+					logger.Infof("Generated rsa 2048 key and cert")
+				}
+
 				err = ioutil.WriteFile("websocks.key", key, 0600)
 				if err != nil {
 					return

@@ -1,4 +1,4 @@
-## WebSocks
+# WebSocks
 
 [中文说明](https://github.com/lzjluzijie/websocks/blob/master/README-zh.md)
 
@@ -14,6 +14,8 @@ Advantages:
 - Can be used with cdn such as cloudflare, not afraid of gfw at all!
 
 The disadvantage is that I have just started development, there is no GUI client, and features are not enough. I will appreciate if you can help me!
+
+To-Do:
 
 ## Example
 
@@ -38,20 +40,15 @@ https://server.com {
 }
 ```
 
-### Built-in TLS
+### Built-in TLS with fake server name and reversing proxy
 
 #### Server
 ```
 ./websocks cert
-./websocks server -l :2333 -p /password --tls
+./websocks server -l :2333 -p /password --proxy https://www.centos.org/ --tls
 ```
 
 #### Local
 ```
-./websocks client -l :1080 -s wss://server.com/password
+./websocks client -l :1080 -s wss://the-real-server.com:2333/password -n www.centos.com --insecure
 ```
-
-### TO-DO
- - [ ] Configuration
- - [ ] Optimize code
- - [ ] WebSocket mux

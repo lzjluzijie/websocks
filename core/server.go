@@ -8,6 +8,9 @@ import (
 
 	"time"
 
+	"net/http/httputil"
+	"net/url"
+
 	"github.com/juju/loggo"
 	"golang.org/x/net/websocket"
 )
@@ -19,6 +22,7 @@ type Server struct {
 	TLS        bool
 	CertPath   string
 	KeyPath    string
+	Proxy      string
 }
 
 var opened = 0
@@ -78,26 +82,36 @@ func (server *Server) Listen() (err error) {
 		}
 	}()
 
-	if !server.TLS {
-		http.Handle(server.Pattern, websocket.Handler(handler))
-		err = http.ListenAndServe(server.ListenAddr, nil)
-		if err != nil {
-			return err
-		}
-		return
-	}
-
 	mux := http.NewServeMux()
 	mux.Handle(server.Pattern, websocket.Handler(handler))
+	if server.Proxy != "" {
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			remote, err := url.Parse(server.Proxy)
+			if err != nil {
+				panic(err)
+			}
+			proxy := httputil.NewSingleHostReverseProxy(remote)
+			proxy.ServeHTTP(w, r)
+		})
+	}
 
 	s := http.Server{
 		Addr:    server.ListenAddr,
 		Handler: mux,
 	}
 
-	err = s.ListenAndServeTLS(server.CertPath, server.KeyPath)
-	if err != nil {
-		return err
+	if !server.TLS {
+		err = s.ListenAndServe()
+		if err != nil {
+			return err
+		}
+		return
+	} else {
+		err = s.ListenAndServeTLS(server.CertPath, server.KeyPath)
+		if err != nil {
+			return err
+		}
 	}
+
 	return
 }
