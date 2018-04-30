@@ -37,7 +37,7 @@ https://server.com {
 }
 ```
 
-### 内置 TLS
+### 内置 TLS 并混淆域名
 
 #### 服务端
 ```
@@ -47,7 +47,7 @@ https://server.com {
 
 #### 客户端
 ```
-./websocks client -l :1080 -s wss://server.com/password
+./websocks client -l :1080 -s wss://server.com:2333/password -n github.com --insecure
 ```
 
 ### TO-DO

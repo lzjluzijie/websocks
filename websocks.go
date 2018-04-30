@@ -19,7 +19,7 @@ var logger = loggo.GetLogger("websocks")
 func main() {
 	app := cli.NewApp()
 	app.Name = "WebSocks"
-	app.Version = "0.2.2"
+	app.Version = "0.3.0"
 	app.Usage = "A secure proxy based on websocket."
 	app.Description = "See https://github.com/lzjluzijie/websocks"
 	app.Author = "Halulu"
@@ -48,6 +48,11 @@ func main() {
 					Value: "ws://localhost:23333/websocks",
 					Usage: "server url",
 				},
+				cli.StringFlag{
+					Name:  "n",
+					Value: "",
+					Usage: "fake server name for tls client hello, blank for real",
+				},
 				cli.BoolFlag{
 					Name:  "insecure",
 					Usage: "InsecureSkipVerify: true",
@@ -57,8 +62,8 @@ func main() {
 				debug := c.GlobalBool("debug")
 				listenAddr := c.String("l")
 				serverURL := c.String("s")
+				serverName := c.String("n")
 				insecureCert := false
-
 				if c.Bool("insecure") {
 					insecureCert = true
 				}
@@ -85,6 +90,7 @@ func main() {
 					LogLevel:     logger.LogLevel(),
 					ListenAddr:   lAddr,
 					URL:          u,
+					ServerName: serverName,
 					InsecureCert: insecureCert,
 				}
 

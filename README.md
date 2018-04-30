@@ -38,7 +38,7 @@ https://server.com {
 }
 ```
 
-### Built-in TLS
+### Built-in TLS with fake server name
 
 #### Server
 ```
@@ -48,7 +48,7 @@ https://server.com {
 
 #### Local
 ```
-./websocks client -l :1080 -s wss://server.com/password
+./websocks client -l :1080 -s wss://server.com:2333/password -n github.com --insecure
 ```
 
 ### TO-DO

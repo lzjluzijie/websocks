@@ -21,6 +21,7 @@ type Client struct {
 	ListenAddr   *net.TCPAddr
 	URL          *url.URL
 	Origin       string
+	ServerName   string
 	InsecureCert bool
 	WSConfig     *websocket.Config
 }
@@ -47,12 +48,17 @@ func (client *Client) Listen() (err error) {
 	config.TlsConfig = &tls.Config{
 		InsecureSkipVerify: client.InsecureCert,
 	}
+	if client.ServerName != ""{
+		config.TlsConfig.ServerName = client.ServerName
+	}
 	client.WSConfig = config
 
 	listener, err := net.ListenTCP("tcp", client.ListenAddr)
 	if err != nil {
 		return err
 	}
+
+	logger.Infof("Start to listen at %s", client.ListenAddr.String())
 
 	defer listener.Close()
 
