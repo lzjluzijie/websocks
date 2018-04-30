@@ -14,20 +14,18 @@
 
 缺点就是刚刚开始开发，没有GUI客户端，功能也比较少，如果你能来帮我那就太好了！
 
-### 示例 (开启 TLS)
+## 示例
+
+### Caddy TLS
 
 #### 服务端
-
 ```
-go get -v github.com/lzjluzijie/websocks/cmd/websocks-server
-websocks-server -l :2333 -p /password
+./websocks server -l :2333 -p /password
 ```
 
 #### 客户端
-
 ```
-go get -v github.com/lzjluzijie/websocks/cmd/websocks-local
-websocks-local -l :1080 -u wss://server.com/password
+./websocks client -l :1080 -s wss://server.com/password
 ```
 
 #### Caddyfile
@@ -39,8 +37,20 @@ https://server.com {
 }
 ```
 
-### TO-DO
+### 内置 TLS
 
+#### 服务端
+```
+./websocks cert
+./websocks server -l :2333 -p /password --tls
+```
+
+#### 客户端
+```
+./websocks client -l :1080 -s wss://server.com/password
+```
+
+### TO-DO
  - [ ] Config
  - [ ] 优化代码
  - [ ] ws复用

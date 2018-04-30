@@ -15,16 +15,16 @@ Advantages:
 
 The disadvantage is that I have just started development, there is no GUI client, and features are not enough. I will appreciate if you can help me!
 
-### Example (Caddy TLS)
+## Example
+
+### Caddy TLS
 
 #### Server
-
 ```
 ./websocks server -l :2333 -p /password
 ```
 
 #### Local
-
 ```
 ./websocks client -l :1080 -s wss://server.com/password
 ```
@@ -38,8 +38,20 @@ https://server.com {
 }
 ```
 
-### TO-DO
+### Built-in TLS
 
+#### Server
+```
+./websocks cert
+./websocks server -l :2333 -p /password --tls
+```
+
+#### Local
+```
+./websocks client -l :1080 -s wss://server.com/password
+```
+
+### TO-DO
  - [ ] Configuration
  - [ ] Optimize code
  - [ ] WebSocket mux

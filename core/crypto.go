@@ -59,6 +59,6 @@ func GenP256(hosts []string) (key, cert []byte, err error) {
 	}
 
 	key = pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: x509Key})
-	cert = pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: serverCert})
+	cert = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: serverCert})
 	return
 }

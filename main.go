@@ -154,7 +154,7 @@ func main() {
 				logger.Infof("Listening at %s", listenAddr)
 				err = server.Listen()
 				if err != nil {
-					logger.Errorf(err.Error())
+					return
 				}
 
 				return
@@ -170,8 +170,8 @@ func main() {
 			},
 		},
 		{
-			Name:    "key",
-			Aliases: []string{"key"},
+			Name:    "cert",
+			Aliases: []string{"cert"},
 			Usage:   "generate self signed cert and key",
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{
