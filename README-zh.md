@@ -1,4 +1,4 @@
-## WebSocks
+# WebSocks
 
 一个基于 WebSocket 的代理工具
 
@@ -7,6 +7,8 @@
 有任何问题或建议可以直接发issue或者联系我 [@halulu](https://t.me/halulu)
 
 开发记录可以看[我的博客](https://halu.lu/post/websocks-development/)
+
+友人正在[一键脚本以及GUI](https://zhuji.lu/topic/15/websocks)
 
 优点
  - 使用WS+TLS，十分安全且不易被检测，和普通HTTPS网站一样
@@ -49,8 +51,3 @@ https://server.com {
 ```
 ./websocks client -l :1080 -s wss://server.com:2333/password -n github.com --insecure
 ```
-
-### TO-DO
- - [ ] Config
- - [ ] 优化代码
- - [ ] ws复用

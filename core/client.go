@@ -48,7 +48,7 @@ func (client *Client) Listen() (err error) {
 	config.TlsConfig = &tls.Config{
 		InsecureSkipVerify: client.InsecureCert,
 	}
-	if client.ServerName != ""{
+	if client.ServerName != "" {
 		config.TlsConfig.ServerName = client.ServerName
 	}
 	client.WSConfig = config

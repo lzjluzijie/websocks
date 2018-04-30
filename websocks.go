@@ -20,7 +20,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "WebSocks"
 	app.Version = "0.3.0"
-	app.Usage = "A secure proxy based on websocket."
+	app.Usage = "A secure proxy based on WebSocket."
 	app.Description = "See https://github.com/lzjluzijie/websocks"
 	app.Author = "Halulu"
 	app.Email = "lzjluzijie@gmail.com"
@@ -51,7 +51,7 @@ func main() {
 				cli.StringFlag{
 					Name:  "n",
 					Value: "",
-					Usage: "fake server name for tls client hello, blank for real",
+					Usage: "fake server name for tls client hello, leave blank to disable",
 				},
 				cli.BoolFlag{
 					Name:  "insecure",
@@ -90,7 +90,7 @@ func main() {
 					LogLevel:     logger.LogLevel(),
 					ListenAddr:   lAddr,
 					URL:          u,
-					ServerName: serverName,
+					ServerName:   serverName,
 					InsecureCert: insecureCert,
 				}
 
@@ -131,6 +131,11 @@ func main() {
 					Value: "websocks.key",
 					Usage: "tls key path",
 				},
+				cli.StringFlag{
+					Name:  "proxy",
+					Value: "",
+					Usage: "reverse proxy url, leave blank to disable",
+				},
 			},
 			Action: func(c *cli.Context) (err error) {
 				debug := c.GlobalBool("debug")
@@ -139,6 +144,7 @@ func main() {
 				tls := c.Bool("tls")
 				certPath := c.String("cert")
 				keyPath := c.String("key")
+				proxy := c.String("proxy")
 
 				if debug {
 					logger.SetLogLevel(loggo.DEBUG)
@@ -155,6 +161,7 @@ func main() {
 					TLS:        tls,
 					CertPath:   certPath,
 					KeyPath:    keyPath,
+					Proxy:      proxy,
 				}
 
 				logger.Infof("Listening at %s", listenAddr)
@@ -182,7 +189,7 @@ func main() {
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{
 					Name:  "hosts",
-					Value: &cli.StringSlice{"github.com"},
+					Value: nil,
 					Usage: "certificate hosts",
 				},
 			},
