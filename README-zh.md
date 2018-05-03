@@ -2,9 +2,9 @@
 
 一个基于 WebSocket 的代理工具
 
-本项目目前还在开发中，更多功能仍在完善中。如果你对这个项目感兴趣，请star它来支持我，蟹蟹。
+本项目目前还在开发中，更多功能仍在完善中。如果你对这个项目感兴趣，请star它来支持我，蟹蟹
 
-有任何问题或建议可以直接发issue或者联系我 [@halulu](https://t.me/halulu)
+有任何问题或建议可以直接发issue或者联系我 [@halulu](https://t.me/halulu)，也可以来[TG群](https://t.me/websocks)水一水
 
 开发记录可以看[我的博客](https://halu.lu/post/websocks-development/)
 
@@ -15,6 +15,8 @@
  - 可以搭配使用cloudflare这类cdn，完全不怕被墙！
 
 缺点就是刚刚开始开发，没有GUI客户端，功能也比较少，如果你能来帮我那就太好了！
+
+To-Do: WebSocks mux
 
 ## 示例
 

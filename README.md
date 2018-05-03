@@ -6,7 +6,7 @@ A secure proxy based on websocket.
 
 This project is still working in progress, more features are still in development. If you are interested in this project, please star this project in order to support me. Thank you.
 
-If you have any problems or suggestions, please do not hesitate to submit issues or contact me [@halulu](https://t.me/halulu)
+If you have any problems or suggestions, please do not hesitate to submit issues or contact me [@halulu](https://t.me/halulu). We also have a [telegram group](https://t.me/websocks) (mostly Chinese, English is ok).
 
 Advantages:
 
@@ -15,7 +15,7 @@ Advantages:
 
 The disadvantage is that I have just started development, there is no GUI client, and features are not enough. I will appreciate if you can help me!
 
-To-Do:
+To-Do: WebSocks mux
 
 ## Example
 
