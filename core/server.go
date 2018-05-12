@@ -28,9 +28,10 @@ type Server struct {
 
 	CreatedAt time.Time
 
-	Opened   uint64
-	Closed   uint64
-	Uploaded uint64
+	Opened     uint64
+	Closed     uint64
+	Uploaded   uint64
+	Downloaded uint64
 }
 
 func (server *Server) HandleWebSocket(ws *websocket.Conn) {
@@ -62,7 +63,8 @@ func (server *Server) HandleWebSocket(ws *websocket.Conn) {
 	defer conn.Close()
 
 	go func() {
-		_, err := io.Copy(conn, ws)
+		downloaded, err := io.Copy(conn, ws)
+		atomic.AddUint64(&server.Downloaded, uint64(downloaded))
 		if err != nil {
 			server.Closed++
 			if err != nil {
@@ -89,7 +91,7 @@ func (server *Server) Listen() (err error) {
 	go func() {
 		for {
 			time.Sleep(time.Second)
-			logger.Debugf("%ds: opened%d, closed%d, uploaded%d bytes", int(time.Since(server.CreatedAt).Seconds()), server.Opened, server.Closed, server.Uploaded)
+			logger.Debugf("%ds: opened %d, closed %d, uploaded %d bytes, downloaded %d bytes", int(time.Since(server.CreatedAt).Seconds()), server.Opened, server.Closed, server.Uploaded, server.Downloaded)
 		}
 	}()
 
