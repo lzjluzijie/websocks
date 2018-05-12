@@ -13,6 +13,8 @@ import (
 
 	"sync/atomic"
 
+	"fmt"
+
 	"github.com/juju/loggo"
 	"golang.org/x/net/websocket"
 )
@@ -85,6 +87,10 @@ func (server *Server) HandleWebSocket(ws *websocket.Conn) {
 	}
 }
 
+func (server *Server) Status(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(fmt.Sprintf("%ds: opened %d, closed %d, uploaded %d bytes, downloaded %d bytes", int(time.Since(server.CreatedAt).Seconds()), server.Opened, server.Closed, server.Uploaded, server.Downloaded)))
+}
+
 func (server *Server) Listen() (err error) {
 	logger.SetLogLevel(server.LogLevel)
 
@@ -97,6 +103,7 @@ func (server *Server) Listen() (err error) {
 
 	mux := http.NewServeMux()
 	mux.Handle(server.Pattern, websocket.Handler(server.HandleWebSocket))
+	mux.HandleFunc("/status", server.Status)
 	if server.Proxy != "" {
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			remote, err := url.Parse(server.Proxy)
