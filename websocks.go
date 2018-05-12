@@ -9,6 +9,8 @@ import (
 
 	"io/ioutil"
 
+	"time"
+
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
@@ -159,6 +161,7 @@ func main() {
 					CertPath:   certPath,
 					KeyPath:    keyPath,
 					Proxy:      proxy,
+					CreatedAt:  time.Now(),
 				}
 
 				logger.Infof("Listening at %s", listenAddr)
