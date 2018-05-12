@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/gob"
 	"io"
 	"net"
 
@@ -103,22 +102,14 @@ func (client *Client) handleConn(conn *net.TCPConn) (err error) {
 		return
 	}
 
-	ws, err := websocket.DialConfig(client.WSConfig)
-
+	config := client.WSConfig
+	config.Header.Add("addr", host)
+	ws, err := websocket.DialConfig(config)
 	if err != nil {
 		return
 	}
 
 	defer ws.Close()
-
-	enc := gob.NewEncoder(ws)
-	req := Request{
-		Addr: host,
-	}
-	err = enc.Encode(req)
-	if err != nil {
-		return
-	}
 
 	go func() {
 		_, err = io.Copy(ws, conn)

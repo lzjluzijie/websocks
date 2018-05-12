@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/gob"
 	"io"
 	"net"
 	"net/http"
@@ -38,12 +37,12 @@ type Server struct {
 
 func (server *Server) HandleWebSocket(ws *websocket.Conn) {
 	server.Opened++
-
 	defer ws.Close()
 
-	dec := gob.NewDecoder(ws)
-	req := Request{}
-	err := dec.Decode(&req)
+	addr := ws.Request().Header.Get("addr")
+	logger.Debugf("Dial %s from %s", addr, ws.RemoteAddr().String())
+
+	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		server.Closed++
 		if err != nil {
@@ -51,17 +50,6 @@ func (server *Server) HandleWebSocket(ws *websocket.Conn) {
 		}
 		return
 	}
-
-	logger.Debugf("Dial %s from %s", req.Addr, ws.RemoteAddr().String())
-	conn, err := net.Dial("tcp", req.Addr)
-	if err != nil {
-		server.Closed++
-		if err != nil {
-			logger.Debugf(err.Error())
-		}
-		return
-	}
-
 	defer conn.Close()
 
 	go func() {
