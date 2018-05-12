@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/gob"
 	"io"
 	"net"
 
@@ -23,7 +22,7 @@ type Client struct {
 	Origin       string
 	ServerName   string
 	InsecureCert bool
-	WSConfig     *websocket.Config
+	WSConfig     websocket.Config
 }
 
 func (client *Client) Listen() (err error) {
@@ -51,7 +50,7 @@ func (client *Client) Listen() (err error) {
 	if client.ServerName != "" {
 		config.TlsConfig.ServerName = client.ServerName
 	}
-	client.WSConfig = config
+	client.WSConfig = *config
 
 	listener, err := net.ListenTCP("tcp", client.ListenAddr)
 	if err != nil {
@@ -103,22 +102,17 @@ func (client *Client) handleConn(conn *net.TCPConn) (err error) {
 		return
 	}
 
-	ws, err := websocket.DialConfig(client.WSConfig)
+	config := client.WSConfig
+	config.Header = map[string][]string{
+		"WebSocks-Host": {host},
+	}
 
+	ws, err := websocket.DialConfig(&config)
 	if err != nil {
 		return
 	}
 
 	defer ws.Close()
-
-	enc := gob.NewEncoder(ws)
-	req := Request{
-		Addr: host,
-	}
-	err = enc.Encode(req)
-	if err != nil {
-		return
-	}
 
 	go func() {
 		_, err = io.Copy(ws, conn)

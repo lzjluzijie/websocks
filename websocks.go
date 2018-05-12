@@ -110,7 +110,7 @@ func main() {
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "l",
-					Value: ":23333",
+					Value: "127.0.0.1:23333",
 					Usage: "local listening port",
 				},
 				cli.StringFlag{

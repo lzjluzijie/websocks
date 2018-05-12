@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/gob"
 	"io"
 	"net"
 	"net/http"
@@ -37,38 +36,27 @@ type Server struct {
 }
 
 func (server *Server) HandleWebSocket(ws *websocket.Conn) {
-	server.Opened++
-
 	defer ws.Close()
 
-	dec := gob.NewDecoder(ws)
-	req := Request{}
-	err := dec.Decode(&req)
+	atomic.AddUint64(&server.Opened, 1)
+	defer atomic.AddUint64(&server.Closed, 1)
+
+	host := ws.Request().Header.Get("WebSocks-Host")
+	logger.Debugf("Dial %s", host)
+
+	conn, err := net.Dial("tcp", host)
 	if err != nil {
-		server.Closed++
 		if err != nil {
 			logger.Debugf(err.Error())
 		}
 		return
 	}
-
-	logger.Debugf("Dial %s from %s", req.Addr, ws.RemoteAddr().String())
-	conn, err := net.Dial("tcp", req.Addr)
-	if err != nil {
-		server.Closed++
-		if err != nil {
-			logger.Debugf(err.Error())
-		}
-		return
-	}
-
 	defer conn.Close()
 
 	go func() {
 		downloaded, err := io.Copy(conn, ws)
 		atomic.AddUint64(&server.Downloaded, uint64(downloaded))
 		if err != nil {
-			server.Closed++
 			if err != nil {
 				logger.Debugf(err.Error())
 			}
@@ -79,7 +67,6 @@ func (server *Server) HandleWebSocket(ws *websocket.Conn) {
 	uploaded, err := io.Copy(ws, conn)
 	atomic.AddUint64(&server.Uploaded, uint64(uploaded))
 	if err != nil {
-		server.Closed++
 		if err != nil {
 			logger.Debugf(err.Error())
 		}
