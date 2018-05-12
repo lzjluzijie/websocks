@@ -1,6 +1,8 @@
 # WebSocks
 
+[教程资源](https://zhuji.lu/tags/websocks)
 [中文说明](https://github.com/lzjluzijie/websocks/blob/master/README-zh.md)
+[Telegram Group](https://t.me/websocks)
 
 A secure proxy based on websocket.
 
@@ -18,6 +20,19 @@ The disadvantage is that I have just started development, there is no GUI client
 To-Do: WebSocks mux
 
 ## Example
+
+### Built-in TLS with fake server name and reversing proxy
+
+#### Server
+```
+./websocks cert
+./websocks server -l :2333 -p /password --proxy https://www.centos.org/ --tls
+```
+
+#### Local
+```
+./websocks client -l :1080 -s wss://the-real-server.com:2333/password -n www.centos.com --insecure
+```
 
 ### Caddy TLS
 
@@ -38,17 +53,4 @@ https://server.com {
     websocket
   }
 }
-```
-
-### Built-in TLS with fake server name and reversing proxy
-
-#### Server
-```
-./websocks cert
-./websocks server -l :2333 -p /password --proxy https://www.centos.org/ --tls
-```
-
-#### Local
-```
-./websocks client -l :1080 -s wss://the-real-server.com:2333/password -n www.centos.com --insecure
 ```

@@ -11,6 +11,10 @@ import (
 	"net/http/httputil"
 	"net/url"
 
+	"sync/atomic"
+
+	"fmt"
+
 	"github.com/juju/loggo"
 	"golang.org/x/net/websocket"
 )
@@ -23,67 +27,83 @@ type Server struct {
 	CertPath   string
 	KeyPath    string
 	Proxy      string
+
+	CreatedAt time.Time
+
+	Opened     uint64
+	Closed     uint64
+	Uploaded   uint64
+	Downloaded uint64
 }
 
-var opened = 0
-var closed = 0
-var t time.Time
-
-func handler(ws *websocket.Conn) {
-	opened++
-	var err error
-	defer func() {
-		closed++
-		if err != nil {
-			logger.Debugf(err.Error())
-		}
-	}()
+func (server *Server) HandleWebSocket(ws *websocket.Conn) {
+	server.Opened++
 
 	defer ws.Close()
 
 	dec := gob.NewDecoder(ws)
 	req := Request{}
-	err = dec.Decode(&req)
+	err := dec.Decode(&req)
 	if err != nil {
+		server.Closed++
+		if err != nil {
+			logger.Debugf(err.Error())
+		}
 		return
 	}
 
 	logger.Debugf("Dial %s from %s", req.Addr, ws.RemoteAddr().String())
 	conn, err := net.Dial("tcp", req.Addr)
 	if err != nil {
+		server.Closed++
+		if err != nil {
+			logger.Debugf(err.Error())
+		}
 		return
 	}
 
 	defer conn.Close()
 
 	go func() {
-		_, err = io.Copy(conn, ws)
+		downloaded, err := io.Copy(conn, ws)
+		atomic.AddUint64(&server.Downloaded, uint64(downloaded))
 		if err != nil {
-			logger.Debugf(err.Error())
+			server.Closed++
+			if err != nil {
+				logger.Debugf(err.Error())
+			}
 			return
 		}
 	}()
 
-	_, err = io.Copy(ws, conn)
+	uploaded, err := io.Copy(ws, conn)
+	atomic.AddUint64(&server.Uploaded, uint64(uploaded))
 	if err != nil {
+		server.Closed++
+		if err != nil {
+			logger.Debugf(err.Error())
+		}
 		return
 	}
+}
+
+func (server *Server) Status(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(fmt.Sprintf("%ds: opened %d, closed %d, uploaded %d bytes, downloaded %d bytes", int(time.Since(server.CreatedAt).Seconds()), server.Opened, server.Closed, server.Uploaded, server.Downloaded)))
 }
 
 func (server *Server) Listen() (err error) {
 	logger.SetLogLevel(server.LogLevel)
 
-	t = time.Now()
-
 	go func() {
 		for {
 			time.Sleep(time.Second)
-			logger.Debugf("%ds: opened%d, closed%d", int(time.Since(t).Seconds()), opened, closed)
+			logger.Debugf("%ds: opened %d, closed %d, uploaded %d bytes, downloaded %d bytes", int(time.Since(server.CreatedAt).Seconds()), server.Opened, server.Closed, server.Uploaded, server.Downloaded)
 		}
 	}()
 
 	mux := http.NewServeMux()
-	mux.Handle(server.Pattern, websocket.Handler(handler))
+	mux.Handle(server.Pattern, websocket.Handler(server.HandleWebSocket))
+	mux.HandleFunc("/status", server.Status)
 	if server.Proxy != "" {
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			remote, err := url.Parse(server.Proxy)

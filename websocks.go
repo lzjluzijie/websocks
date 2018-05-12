@@ -9,6 +9,8 @@ import (
 
 	"io/ioutil"
 
+	"time"
+
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
@@ -20,7 +22,7 @@ func main() {
 
 	app := cli.NewApp()
 	app.Name = "WebSocks"
-	app.Version = "0.3.0"
+	app.Version = "0.4.0"
 	app.Usage = "A secure proxy based on WebSocket."
 	app.Description = "See https://github.com/lzjluzijie/websocks"
 	app.Author = "Halulu"
@@ -159,6 +161,7 @@ func main() {
 					CertPath:   certPath,
 					KeyPath:    keyPath,
 					Proxy:      proxy,
+					CreatedAt:  time.Now(),
 				}
 
 				logger.Infof("Listening at %s", listenAddr)

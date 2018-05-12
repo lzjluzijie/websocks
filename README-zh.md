@@ -1,5 +1,8 @@
 # WebSocks
 
+[教程资源](https://zhuji.lu/tags/websocks)
+[TG群](https://t.me/websocks)
+
 一个基于 WebSocket 的代理工具
 
 本项目目前还在开发中，更多功能仍在完善中。如果你对这个项目感兴趣，请star它来支持我，蟹蟹
