@@ -36,16 +36,16 @@ type Server struct {
 }
 
 func (server *Server) HandleWebSocket(ws *websocket.Conn) {
-	server.Opened++
 	defer ws.Close()
 
-	fmt.Println(ws.Request().Header)
+	atomic.AddUint64(&server.Opened, 1)
+	defer atomic.AddUint64(&server.Closed, 1)
+
 	host := ws.Request().Header.Get("WebSocks-Host")
 	logger.Debugf("Dial %s", host)
 
 	conn, err := net.Dial("tcp", host)
 	if err != nil {
-		server.Closed++
 		if err != nil {
 			logger.Debugf(err.Error())
 		}
@@ -57,7 +57,6 @@ func (server *Server) HandleWebSocket(ws *websocket.Conn) {
 		downloaded, err := io.Copy(conn, ws)
 		atomic.AddUint64(&server.Downloaded, uint64(downloaded))
 		if err != nil {
-			server.Closed++
 			if err != nil {
 				logger.Debugf(err.Error())
 			}
@@ -68,7 +67,6 @@ func (server *Server) HandleWebSocket(ws *websocket.Conn) {
 	uploaded, err := io.Copy(ws, conn)
 	atomic.AddUint64(&server.Uploaded, uint64(uploaded))
 	if err != nil {
-		server.Closed++
 		if err != nil {
 			logger.Debugf(err.Error())
 		}

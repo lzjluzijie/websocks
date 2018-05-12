@@ -103,7 +103,10 @@ func (client *Client) handleConn(conn *net.TCPConn) (err error) {
 	}
 
 	config := client.WSConfig
-	config.Header.Add("WebSocks-Host", host)
+	config.Header = map[string][]string{
+		"WebSocks-Host": {host},
+	}
+
 	ws, err := websocket.DialConfig(&config)
 	if err != nil {
 		return
