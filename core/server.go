@@ -39,10 +39,11 @@ func (server *Server) HandleWebSocket(ws *websocket.Conn) {
 	server.Opened++
 	defer ws.Close()
 
-	addr := ws.Request().Header.Get("addr")
-	logger.Debugf("Dial %s from %s", addr, ws.RemoteAddr().String())
+	fmt.Println(ws.Request().Header)
+	host := ws.Request().Header.Get("WebSocks-Host")
+	logger.Debugf("Dial %s", host)
 
-	conn, err := net.Dial("tcp", addr)
+	conn, err := net.Dial("tcp", host)
 	if err != nil {
 		server.Closed++
 		if err != nil {

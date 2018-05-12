@@ -22,7 +22,7 @@ type Client struct {
 	Origin       string
 	ServerName   string
 	InsecureCert bool
-	WSConfig     *websocket.Config
+	WSConfig     websocket.Config
 }
 
 func (client *Client) Listen() (err error) {
@@ -50,7 +50,7 @@ func (client *Client) Listen() (err error) {
 	if client.ServerName != "" {
 		config.TlsConfig.ServerName = client.ServerName
 	}
-	client.WSConfig = config
+	client.WSConfig = *config
 
 	listener, err := net.ListenTCP("tcp", client.ListenAddr)
 	if err != nil {
@@ -103,8 +103,8 @@ func (client *Client) handleConn(conn *net.TCPConn) (err error) {
 	}
 
 	config := client.WSConfig
-	config.Header.Add("addr", host)
-	ws, err := websocket.DialConfig(config)
+	config.Header.Add("WebSocks-Host", host)
+	ws, err := websocket.DialConfig(&config)
 	if err != nil {
 		return
 	}
