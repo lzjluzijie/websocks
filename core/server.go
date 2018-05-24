@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -8,8 +9,8 @@ import (
 	"net/url"
 	"sync/atomic"
 	"time"
-	"fmt"
 
+	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
 )
 
@@ -22,6 +23,8 @@ type Server struct {
 	KeyPath    string
 	Proxy      string
 
+	Upgrader *websocket.Upgrader
+
 	CreatedAt time.Time
 
 	Opened     uint64
@@ -31,10 +34,14 @@ type Server struct {
 }
 
 func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
-	ws, err := NewWebSocket(w, r)
+	c, err := server.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Debugf(err.Error())
 		return
+	}
+
+	ws := &WebSocket{
+		conn: c,
 	}
 
 	atomic.AddUint64(&server.Opened, 1)
