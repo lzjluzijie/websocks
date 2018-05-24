@@ -11,6 +11,9 @@ import (
 
 	"time"
 
+	"crypto/tls"
+
+	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
@@ -87,12 +90,25 @@ func main() {
 					return
 				}
 
+				tlsConfig := &tls.Config{
+					InsecureSkipVerify: insecureCert,
+				}
+
+				if serverName != "" {
+					tlsConfig.ServerName = serverName
+				}
+
 				local := core.Client{
-					LogLevel:     logger.LogLevel(),
-					ListenAddr:   lAddr,
-					URL:          u,
-					ServerName:   serverName,
-					InsecureCert: insecureCert,
+					LogLevel:   logger.LogLevel(),
+					ListenAddr: lAddr,
+					URL:        u,
+					Dialer: &websocket.Dialer{
+						ReadBufferSize:   4 * 1024,
+						WriteBufferSize:  4 * 1024,
+						HandshakeTimeout: 10 * time.Second,
+						TLSClientConfig:  tlsConfig,
+					},
+					CreatedAt: time.Now(),
 				}
 
 				err = local.Listen()
@@ -110,7 +126,7 @@ func main() {
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "l",
-					Value: "127.0.0.1:23333",
+					Value: "0.0.0.0:23333",
 					Usage: "local listening port",
 				},
 				cli.StringFlag{
@@ -161,7 +177,12 @@ func main() {
 					CertPath:   certPath,
 					KeyPath:    keyPath,
 					Proxy:      proxy,
-					CreatedAt:  time.Now(),
+					Upgrader: &websocket.Upgrader{
+						ReadBufferSize:   4 * 1024,
+						WriteBufferSize:  4 * 1024,
+						HandshakeTimeout: 10 * time.Second,
+					},
+					CreatedAt: time.Now(),
 				}
 
 				logger.Infof("Listening at %s", listenAddr)

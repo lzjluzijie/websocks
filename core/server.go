@@ -1,21 +1,17 @@
 package core
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"net/http"
-
-	"time"
-
 	"net/http/httputil"
 	"net/url"
-
 	"sync/atomic"
+	"time"
 
-	"fmt"
-
+	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
-	"golang.org/x/net/websocket"
 )
 
 type Server struct {
@@ -27,6 +23,8 @@ type Server struct {
 	KeyPath    string
 	Proxy      string
 
+	Upgrader *websocket.Upgrader
+
 	CreatedAt time.Time
 
 	Opened     uint64
@@ -35,13 +33,21 @@ type Server struct {
 	Downloaded uint64
 }
 
-func (server *Server) HandleWebSocket(ws *websocket.Conn) {
-	defer ws.Close()
+func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+	c, err := server.Upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logger.Debugf(err.Error())
+		return
+	}
+
+	ws := &WebSocket{
+		conn: c,
+	}
 
 	atomic.AddUint64(&server.Opened, 1)
 	defer atomic.AddUint64(&server.Closed, 1)
 
-	host := ws.Request().Header.Get("WebSocks-Host")
+	host := r.Header.Get("WebSocks-Host")
 	logger.Debugf("Dial %s", host)
 
 	conn, err := net.Dial("tcp", host)
@@ -57,9 +63,7 @@ func (server *Server) HandleWebSocket(ws *websocket.Conn) {
 		downloaded, err := io.Copy(conn, ws)
 		atomic.AddUint64(&server.Downloaded, uint64(downloaded))
 		if err != nil {
-			if err != nil {
-				logger.Debugf(err.Error())
-			}
+			logger.Debugf(err.Error())
 			return
 		}
 	}()
@@ -67,11 +71,10 @@ func (server *Server) HandleWebSocket(ws *websocket.Conn) {
 	uploaded, err := io.Copy(ws, conn)
 	atomic.AddUint64(&server.Uploaded, uint64(uploaded))
 	if err != nil {
-		if err != nil {
-			logger.Debugf(err.Error())
-		}
+		logger.Debugf(err.Error())
 		return
 	}
+	return
 }
 
 func (server *Server) Status(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +92,7 @@ func (server *Server) Listen() (err error) {
 	}()
 
 	mux := http.NewServeMux()
-	mux.Handle(server.Pattern, websocket.Handler(server.HandleWebSocket))
+	mux.HandleFunc(server.Pattern, server.HandleWebSocket)
 	mux.HandleFunc("/status", server.Status)
 	if server.Proxy != "" {
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

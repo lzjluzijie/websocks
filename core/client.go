@@ -1,28 +1,26 @@
 package core
 
 import (
+	"errors"
 	"io"
 	"net"
-
-	"errors"
 	"net/url"
+	"time"
 
-	"crypto/tls"
-
+	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
-	"golang.org/x/net/websocket"
 )
 
 var logger = loggo.GetLogger("core")
 
 type Client struct {
-	LogLevel     loggo.Level
-	ListenAddr   *net.TCPAddr
-	URL          *url.URL
-	Origin       string
-	ServerName   string
-	InsecureCert bool
-	WSConfig     websocket.Config
+	LogLevel   loggo.Level
+	ListenAddr *net.TCPAddr
+	URL        *url.URL
+	Origin     string
+
+	Dialer    *websocket.Dialer
+	CreatedAt time.Time
 }
 
 func (client *Client) Listen() (err error) {
@@ -38,19 +36,6 @@ func (client *Client) Listen() (err error) {
 	}
 
 	logger.Debugf(client.Origin)
-
-	config, err := websocket.NewConfig(client.URL.String(), client.Origin)
-	if err != nil {
-		return
-	}
-
-	config.TlsConfig = &tls.Config{
-		InsecureSkipVerify: client.InsecureCert,
-	}
-	if client.ServerName != "" {
-		config.TlsConfig.ServerName = client.ServerName
-	}
-	client.WSConfig = *config
 
 	listener, err := net.ListenTCP("tcp", client.ListenAddr)
 	if err != nil {
@@ -102,17 +87,10 @@ func (client *Client) handleConn(conn *net.TCPConn) (err error) {
 		return
 	}
 
-	config := client.WSConfig
-	config.Header = map[string][]string{
-		"WebSocks-Host": {host},
-	}
-
-	ws, err := websocket.DialConfig(&config)
+	ws, err := client.dial(host)
 	if err != nil {
 		return
 	}
-
-	defer ws.Close()
 
 	go func() {
 		_, err = io.Copy(ws, conn)
@@ -128,5 +106,20 @@ func (client *Client) handleConn(conn *net.TCPConn) (err error) {
 		return
 	}
 
+	return
+}
+
+func (client *Client) dial(host string) (ws *WebSocket, err error) {
+	conn, _, err := client.Dialer.Dial(client.URL.String(), map[string][]string{
+		"WebSocks-Host": {host},
+	})
+
+	if err != nil {
+		return
+	}
+
+	ws = &WebSocket{
+		conn: conn,
+	}
 	return
 }
