@@ -3,10 +3,8 @@ package core
 import (
 	"io"
 	"net"
-
-	"errors"
 	"net/url"
-
+	"errors"
 	"crypto/tls"
 
 	"github.com/juju/loggo"

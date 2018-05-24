@@ -1,41 +1,49 @@
 package core
 
 import (
-	"io"
+	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-type Conn struct {
-	c      *websocket.Conn
-	reader io.Reader
-	writer io.Writer
+var upgrader = &websocket.Upgrader{
+	ReadBufferSize:   4 * 1024,
+	WriteBufferSize:  4 * 1024,
+	HandshakeTimeout: 10 * time.Second,
 }
 
-func (conn *Conn) Read(p []byte) (n int, err error) {
-	reader := conn.reader
-
-	if reader == nil {
-		_, reader, err = conn.c.NextReader()
-		if err != nil {
-			return 0, err
-		}
-		conn.reader = reader
-	}
-
-	return reader.Read(p)
+type WebSocket struct {
+	conn   *websocket.Conn
+	buf []byte
 }
 
-func (conn *Conn) Write(p []byte) (n int, err error) {
-	writer := conn.writer
+func NewWebSocket(w http.ResponseWriter, r *http.Request) (ws *WebSocket, err error) {
+	c, err := upgrader.Upgrade(w, r, nil)
+	ws = &WebSocket{
+		conn: c,
+	}
+	return
+}
 
-	if writer == nil {
-		writer, err = conn.c.NextWriter(websocket.BinaryMessage)
-		if err != nil {
-			return 0, err
+func (ws *WebSocket) Read(p []byte) (n int, err error) {
+	if len(ws.buf) == 0 {
+		_, ws.buf, err = ws.conn.ReadMessage()
+		if err != nil{
+			return
 		}
-		conn.writer = writer
 	}
 
-	return writer.Write(p)
+	n = copy(p, ws.buf)
+	ws.buf = ws.buf[n:]
+	return
+}
+
+func (ws *WebSocket) Write(p []byte) (n int, err error) {
+	err = ws.conn.WriteMessage(websocket.BinaryMessage, p)
+	if err != nil {
+		return
+	}
+
+	return len(p), nil
 }
