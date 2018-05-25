@@ -5,8 +5,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"sync/atomic"
 	"time"
 
@@ -91,23 +89,9 @@ func (server *Server) Listen() (err error) {
 		}
 	}()
 
-	mux := http.NewServeMux()
-	mux.HandleFunc(server.Pattern, server.HandleWebSocket)
-	mux.HandleFunc("/status", server.Status)
-	if server.Proxy != "" {
-		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			remote, err := url.Parse(server.Proxy)
-			if err != nil {
-				panic(err)
-			}
-			proxy := httputil.NewSingleHostReverseProxy(remote)
-			proxy.ServeHTTP(w, r)
-		})
-	}
-
 	s := http.Server{
 		Addr:    server.ListenAddr,
-		Handler: mux,
+		Handler: server.getMacaron(),
 	}
 
 	if !server.TLS {

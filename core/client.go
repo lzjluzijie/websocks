@@ -16,7 +16,9 @@ type Client struct {
 	LogLevel   loggo.Level
 	ListenAddr *net.TCPAddr
 	URL        *url.URL
-	Dialer    *websocket.Dialer
+
+	Dialer *websocket.Dialer
+
 	CreatedAt time.Time
 }
 
