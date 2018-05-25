@@ -1,12 +1,13 @@
 package core
 
 import (
-	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"sync/atomic"
 	"time"
+
+	"fmt"
 
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
@@ -75,8 +76,8 @@ func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (server *Server) Status(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(fmt.Sprintf("%ds: opened %d, closed %d, uploaded %d bytes, downloaded %d bytes", int(time.Since(server.CreatedAt).Seconds()), server.Opened, server.Closed, server.Uploaded, server.Downloaded)))
+func (server *Server) status() string {
+	return fmt.Sprintf("%ds: opened %d, closed %d, uploaded %d bytes, downloaded %d bytes", int(time.Since(server.CreatedAt).Seconds()), server.Opened, server.Closed, server.Uploaded, server.Downloaded)
 }
 
 func (server *Server) Listen() (err error) {
