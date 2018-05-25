@@ -1,7 +1,6 @@
 package core
 
 import (
-	"errors"
 	"io"
 	"net"
 	"net/url"
@@ -17,25 +16,12 @@ type Client struct {
 	LogLevel   loggo.Level
 	ListenAddr *net.TCPAddr
 	URL        *url.URL
-	Origin     string
-
 	Dialer    *websocket.Dialer
 	CreatedAt time.Time
 }
 
 func (client *Client) Listen() (err error) {
 	logger.SetLogLevel(client.LogLevel)
-
-	switch client.URL.Scheme {
-	case "ws":
-		client.Origin = "http://" + client.URL.Host
-	case "wss":
-		client.Origin = "https://" + client.URL.Host
-	default:
-		return errors.New("unknown scheme")
-	}
-
-	logger.Debugf(client.Origin)
 
 	listener, err := net.ListenTCP("tcp", client.ListenAddr)
 	if err != nil {
