@@ -19,6 +19,7 @@ func (ws *WebSocket) Read(p []byte) (n int, err error) {
 
 	n = copy(p, ws.buf)
 	ws.buf = ws.buf[n:]
+
 	return
 }
 

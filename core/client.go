@@ -17,6 +17,10 @@ type Client struct {
 	ListenAddr *net.TCPAddr
 	URL        *url.URL
 
+	Mux        bool
+	MuxS       []*Mux
+	MuxTCPConn map[uint64]*net.TCPConn
+
 	Dialer *websocket.Dialer
 
 	CreatedAt time.Time
@@ -24,6 +28,16 @@ type Client struct {
 
 func (client *Client) Listen() (err error) {
 	logger.SetLogLevel(client.LogLevel)
+
+	if client.Mux {
+		mux, err := client.DialMux()
+		if err != nil {
+			return err
+		}
+
+		client.MuxS = []*Mux{mux}
+		logger.Debugf("mux ok")
+	}
 
 	listener, err := net.ListenTCP("tcp", client.ListenAddr)
 	if err != nil {
@@ -68,16 +82,28 @@ func (client *Client) handleConn(conn *net.TCPConn) (err error) {
 		return
 	}
 
-	logger.Debugf("Host: %s", host)
-
 	_, err = conn.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x08, 0x43})
 	if err != nil {
 		return
 	}
 
-	ws, err := client.dial(host)
+	if client.Mux {
+		client.ClientHandleMux(conn, host)
+		return
+	}
+
+	wsConn, _, err := client.Dialer.Dial(client.URL.String(), map[string][]string{
+		"WebSocks-Host": {host},
+	})
+
 	if err != nil {
 		return
+	}
+
+	logger.Debugf("host: %s", host)
+
+	ws := &WebSocket{
+		conn: wsConn,
 	}
 
 	go func() {
@@ -94,20 +120,5 @@ func (client *Client) handleConn(conn *net.TCPConn) (err error) {
 		return
 	}
 
-	return
-}
-
-func (client *Client) dial(host string) (ws *WebSocket, err error) {
-	conn, _, err := client.Dialer.Dial(client.URL.String(), map[string][]string{
-		"WebSocks-Host": {host},
-	})
-
-	if err != nil {
-		return
-	}
-
-	ws = &WebSocket{
-		conn: conn,
-	}
 	return
 }

@@ -54,6 +54,10 @@ func main() {
 					Value: "ws://localhost:23333/websocks",
 					Usage: "server url",
 				},
+				cli.BoolFlag{
+					Name:  "mux",
+					Usage: "mux mode",
+				},
 				cli.StringFlag{
 					Name:  "n",
 					Value: "",
@@ -68,6 +72,7 @@ func main() {
 				debug := c.GlobalBool("debug")
 				listenAddr := c.String("l")
 				serverURL := c.String("s")
+				mux := c.Bool("mux")
 				serverName := c.String("n")
 				insecureCert := false
 				if c.Bool("insecure") {
@@ -108,7 +113,9 @@ func main() {
 						HandshakeTimeout: 10 * time.Second,
 						TLSClientConfig:  tlsConfig,
 					},
-					CreatedAt: time.Now(),
+					Mux:        mux,
+					MuxTCPConn: make(map[uint64]*net.TCPConn),
+					CreatedAt:  time.Now(),
 				}
 
 				err = local.Listen()
@@ -177,6 +184,7 @@ func main() {
 					CertPath:   certPath,
 					KeyPath:    keyPath,
 					Proxy:      proxy,
+					MuxConn:    make(map[uint64]net.Conn),
 					Upgrader: &websocket.Upgrader{
 						ReadBufferSize:   4 * 1024,
 						WriteBufferSize:  4 * 1024,

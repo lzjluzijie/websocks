@@ -24,6 +24,8 @@ type Server struct {
 	KeyPath    string
 	Proxy      string
 
+	MuxConn map[uint64]net.Conn
+
 	Upgrader *websocket.Upgrader
 
 	CreatedAt time.Time
@@ -47,6 +49,11 @@ func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	atomic.AddUint64(&server.Opened, 1)
 	defer atomic.AddUint64(&server.Closed, 1)
+
+	if r.Header.Get("WebSocks-Mux") == "mux" {
+		server.ServerHandleMux(ws)
+		return
+	}
 
 	host := r.Header.Get("WebSocks-Host")
 	logger.Debugf("Dial %s", host)
