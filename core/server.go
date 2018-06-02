@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"io"
 	"net"
 	"net/http"
@@ -10,8 +11,6 @@ import (
 	"fmt"
 
 	"crypto/tls"
-
-	"encoding/json"
 
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
@@ -100,7 +99,6 @@ func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 				stream.Close()
 				return
 			}
-
 		}
 		return
 	}

@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"time"
 
-	"encoding/json"
-
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
 	"github.com/xtaci/smux"
@@ -20,7 +18,9 @@ type Client struct {
 	ListenAddr *net.TCPAddr
 	URL        *url.URL
 
-	Mux bool
+	Mux        bool
+	Opened     int
+	StreamChan chan *smux.Stream
 
 	Dialer *websocket.Dialer
 
@@ -78,37 +78,20 @@ func (client *Client) handleConn(conn *net.TCPConn) {
 	logger.Debugf("host: %s", host)
 
 	if client.Mux {
-		wsConn, _, err := client.Dialer.Dial(client.URL.String(), map[string][]string{
-			"WebSocks-Mux": {"mux"},
-		})
-		if err != nil {
-			logger.Errorf(err.Error())
-			return
+		l := len(client.StreamChan)
+		c := cap(client.StreamChan)
+		logger.Debugf("%d %d", l, c)
+		if l != c {
+			go func() {
+				err := client.OpenSession()
+				if err != nil {
+					logger.Errorf(err.Error())
+					return
+				}
+			}()
 		}
 
-		ws := &WebSocket{
-			conn: wsConn,
-		}
-
-		session, err := smux.Client(ws, nil)
-		if err != nil {
-			logger.Errorf(err.Error())
-			return
-		}
-
-		stream, err := session.OpenStream()
-		if err != nil {
-			logger.Errorf(err.Error())
-			return
-		}
-
-		req := MuxRequest{
-			Host: host,
-		}
-
-		enc := json.NewEncoder(stream)
-		err = enc.Encode(req)
-
+		stream, err := client.GetStream(host)
 		if err != nil {
 			logger.Errorf(err.Error())
 			return

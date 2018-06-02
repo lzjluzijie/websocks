@@ -17,6 +17,7 @@ import (
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
+	"github.com/xtaci/smux"
 )
 
 func main() {
@@ -46,7 +47,7 @@ func main() {
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "l",
-					Value: ":10801",
+					Value: "127.0.0.1:10801",
 					Usage: "local listening port",
 				},
 				cli.StringFlag{
@@ -113,8 +114,9 @@ func main() {
 						HandshakeTimeout: 10 * time.Second,
 						TLSClientConfig:  tlsConfig,
 					},
-					Mux:       mux,
-					CreatedAt: time.Now(),
+					Mux:        mux,
+					StreamChan: make(chan *smux.Stream, 8),
+					CreatedAt:  time.Now(),
 				}
 
 				err = local.Listen()
