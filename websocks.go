@@ -113,9 +113,8 @@ func main() {
 						HandshakeTimeout: 10 * time.Second,
 						TLSClientConfig:  tlsConfig,
 					},
-					Mux:        mux,
-					MuxTCPConn: make(map[uint64]*net.TCPConn),
-					CreatedAt:  time.Now(),
+					Mux:       mux,
+					CreatedAt: time.Now(),
 				}
 
 				err = local.Listen()
@@ -184,7 +183,6 @@ func main() {
 					CertPath:   certPath,
 					KeyPath:    keyPath,
 					Proxy:      proxy,
-					MuxConn:    make(map[uint64]net.Conn),
 					Upgrader: &websocket.Upgrader{
 						ReadBufferSize:   4 * 1024,
 						WriteBufferSize:  4 * 1024,

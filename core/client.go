@@ -6,8 +6,11 @@ import (
 	"net/url"
 	"time"
 
+	"encoding/json"
+
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
+	"github.com/xtaci/smux"
 )
 
 var logger = loggo.GetLogger("core")
@@ -17,9 +20,7 @@ type Client struct {
 	ListenAddr *net.TCPAddr
 	URL        *url.URL
 
-	Mux        bool
-	MuxS       []*Mux
-	MuxTCPConn map[uint64]*net.TCPConn
+	Mux bool
 
 	Dialer *websocket.Dialer
 
@@ -28,16 +29,6 @@ type Client struct {
 
 func (client *Client) Listen() (err error) {
 	logger.SetLogLevel(client.LogLevel)
-
-	if client.Mux {
-		mux, err := client.DialMux()
-		if err != nil {
-			return err
-		}
-
-		client.MuxS = []*Mux{mux}
-		logger.Debugf("mux ok")
-	}
 
 	listener, err := net.ListenTCP("tcp", client.ListenAddr)
 	if err != nil {
@@ -61,34 +52,85 @@ func (client *Client) Listen() (err error) {
 	return nil
 }
 
-func (client *Client) handleConn(conn *net.TCPConn) (err error) {
-	defer func() {
-		if err != nil {
-			logger.Debugf("Handle connection error: %s", err.Error())
-		}
-	}()
-
+func (client *Client) handleConn(conn *net.TCPConn) {
 	defer conn.Close()
 
 	conn.SetLinger(0)
 
-	err = handShake(conn)
+	err := handShake(conn)
 	if err != nil {
+		logger.Errorf(err.Error())
 		return
 	}
 
 	_, host, err := getRequest(conn)
 	if err != nil {
+		logger.Errorf(err.Error())
 		return
 	}
 
 	_, err = conn.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x08, 0x43})
 	if err != nil {
+		logger.Errorf(err.Error())
 		return
 	}
 
+	logger.Debugf("host: %s", host)
+
 	if client.Mux {
-		client.ClientHandleMux(conn, host)
+		wsConn, _, err := client.Dialer.Dial(client.URL.String(), map[string][]string{
+			"WebSocks-Mux": {"mux"},
+		})
+		if err != nil {
+			logger.Errorf(err.Error())
+			return
+		}
+
+		ws := &WebSocket{
+			conn: wsConn,
+		}
+
+		session, err := smux.Client(ws, nil)
+		if err != nil {
+			logger.Errorf(err.Error())
+			return
+		}
+
+		stream, err := session.OpenStream()
+		if err != nil {
+			logger.Errorf(err.Error())
+			return
+		}
+
+		req := MuxRequest{
+			Host: host,
+		}
+
+		enc := json.NewEncoder(stream)
+		err = enc.Encode(req)
+
+		if err != nil {
+			logger.Errorf(err.Error())
+			return
+		}
+
+		go func() {
+			_, err = io.Copy(stream, conn)
+			if err != nil {
+				logger.Debugf(err.Error())
+				stream.Close()
+				return
+			}
+			return
+		}()
+
+		_, err = io.Copy(conn, stream)
+		if err != nil {
+			logger.Errorf(err.Error())
+			stream.Close()
+			return
+		}
+
 		return
 	}
 
@@ -99,8 +141,6 @@ func (client *Client) handleConn(conn *net.TCPConn) (err error) {
 	if err != nil {
 		return
 	}
-
-	logger.Debugf("host: %s", host)
 
 	ws := &WebSocket{
 		conn: wsConn,

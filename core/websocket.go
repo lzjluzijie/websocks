@@ -31,3 +31,8 @@ func (ws *WebSocket) Write(p []byte) (n int, err error) {
 
 	return len(p), nil
 }
+
+func (ws *WebSocket) Close() (err error) {
+	ws.conn.Close()
+	return
+}
