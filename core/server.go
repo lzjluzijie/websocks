@@ -1,14 +1,15 @@
 package core
 
 import (
-	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"sync/atomic"
 	"time"
+
+	"fmt"
+
+	"crypto/tls"
 
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
@@ -77,8 +78,8 @@ func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (server *Server) Status(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(fmt.Sprintf("%ds: opened %d, closed %d, uploaded %d bytes, downloaded %d bytes", int(time.Since(server.CreatedAt).Seconds()), server.Opened, server.Closed, server.Uploaded, server.Downloaded)))
+func (server *Server) status() string {
+	return fmt.Sprintf("%ds: opened %d, closed %d, uploaded %d bytes, downloaded %d bytes", int(time.Since(server.CreatedAt).Seconds()), server.Opened, server.Closed, server.Uploaded, server.Downloaded)
 }
 
 func (server *Server) Listen() (err error) {
@@ -91,23 +92,9 @@ func (server *Server) Listen() (err error) {
 		}
 	}()
 
-	mux := http.NewServeMux()
-	mux.HandleFunc(server.Pattern, server.HandleWebSocket)
-	mux.HandleFunc("/status", server.Status)
-	if server.Proxy != "" {
-		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			remote, err := url.Parse(server.Proxy)
-			if err != nil {
-				panic(err)
-			}
-			proxy := httputil.NewSingleHostReverseProxy(remote)
-			proxy.ServeHTTP(w, r)
-		})
-	}
-
 	s := http.Server{
 		Addr:    server.ListenAddr,
-		Handler: mux,
+		Handler: server.getMacaron(),
 	}
 
 	if !server.TLS {
@@ -117,6 +104,18 @@ func (server *Server) Listen() (err error) {
 		}
 		return
 	} else {
+		tlsConfig := &tls.Config{
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			},
+		}
+
+		s.TLSConfig = tlsConfig
 		err = s.ListenAndServeTLS(server.CertPath, server.KeyPath)
 		if err != nil {
 			return err
