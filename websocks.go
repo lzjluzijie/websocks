@@ -17,7 +17,6 @@ import (
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
-	"github.com/xtaci/smux"
 )
 
 func main() {
@@ -114,9 +113,8 @@ func main() {
 						HandshakeTimeout: 10 * time.Second,
 						TLSClientConfig:  tlsConfig,
 					},
-					Mux:        mux,
-					StreamChan: make(chan *smux.Stream, 8),
-					CreatedAt:  time.Now(),
+					Mux:       mux,
+					CreatedAt: time.Now(),
 				}
 
 				err = local.Listen()
@@ -190,7 +188,8 @@ func main() {
 						WriteBufferSize:  4 * 1024,
 						HandshakeTimeout: 10 * time.Second,
 					},
-					CreatedAt: time.Now(),
+					MessageChan: make(chan *core.Message),
+					CreatedAt:   time.Now(),
 				}
 
 				logger.Infof("Listening at %s", listenAddr)

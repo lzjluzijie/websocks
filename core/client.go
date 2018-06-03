@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
-	"github.com/xtaci/smux"
 )
 
 var logger = loggo.GetLogger("core")
@@ -18,9 +17,7 @@ type Client struct {
 	ListenAddr *net.TCPAddr
 	URL        *url.URL
 
-	Mux        bool
-	Opened     int
-	StreamChan chan *smux.Stream
+	Mux bool
 
 	Dialer *websocket.Dialer
 
@@ -38,6 +35,32 @@ func (client *Client) Listen() (err error) {
 	logger.Infof("Start to listen at %s", client.ListenAddr.String())
 
 	defer listener.Close()
+
+	if client.Mux {
+		muxClient := &MuxClient{
+			Client:      client,
+			MessageChan: make(chan *Message),
+		}
+
+		for i := 0; i < 4; i++ {
+			err = muxClient.Open()
+			if err != nil {
+				logger.Debugf(err.Error())
+				return
+			}
+		}
+
+		for {
+			conn, err := listener.AcceptTCP()
+			if err != nil {
+				logger.Debugf(err.Error())
+				continue
+			}
+
+			go muxClient.handleConn(conn)
+		}
+		return
+	}
 
 	for {
 		conn, err := listener.AcceptTCP()
@@ -76,46 +99,6 @@ func (client *Client) handleConn(conn *net.TCPConn) {
 	}
 
 	logger.Debugf("host: %s", host)
-
-	if client.Mux {
-		l := len(client.StreamChan)
-		c := cap(client.StreamChan)
-		logger.Debugf("%d %d", l, c)
-		if l != c {
-			go func() {
-				err := client.OpenSession()
-				if err != nil {
-					logger.Errorf(err.Error())
-					return
-				}
-			}()
-		}
-
-		stream, err := client.GetStream(host)
-		if err != nil {
-			logger.Errorf(err.Error())
-			return
-		}
-
-		go func() {
-			_, err = io.Copy(stream, conn)
-			if err != nil {
-				logger.Debugf(err.Error())
-				stream.Close()
-				return
-			}
-			return
-		}()
-
-		_, err = io.Copy(conn, stream)
-		if err != nil {
-			logger.Errorf(err.Error())
-			stream.Close()
-			return
-		}
-
-		return
-	}
 
 	wsConn, _, err := client.Dialer.Dial(client.URL.String(), map[string][]string{
 		"WebSocks-Host": {host},

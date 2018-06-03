@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/json"
 	"io"
 	"net"
 	"net/http"
@@ -12,9 +11,10 @@ import (
 
 	"crypto/tls"
 
+	"sync"
+
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
-	"github.com/xtaci/smux"
 )
 
 type Server struct {
@@ -27,6 +27,10 @@ type Server struct {
 	Proxy      string
 
 	Upgrader *websocket.Upgrader
+
+	MessageChan chan *Message
+	muxConnMap  sync.Map
+	Mutex       sync.Mutex
 
 	CreatedAt time.Time
 
@@ -51,55 +55,7 @@ func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	defer atomic.AddUint64(&server.Closed, 1)
 
 	if r.Header.Get("WebSocks-Mux") == "mux" {
-		session, err := smux.Server(ws, nil)
-		if err != nil {
-			logger.Errorf(err.Error())
-			return
-		}
-
-		for {
-			stream, err := session.AcceptStream()
-			if err != nil {
-				logger.Errorf(err.Error())
-				return
-			}
-
-			dec := json.NewDecoder(stream)
-			req := &MuxRequest{}
-			err = dec.Decode(req)
-			if err != nil {
-				logger.Errorf(err.Error())
-				return
-			}
-
-			host := req.Host
-
-			conn, err := net.Dial("tcp", host)
-			if err != nil {
-				if err != nil {
-					logger.Debugf(err.Error())
-				}
-				return
-			}
-
-			go func() {
-				downloaded, err := io.Copy(conn, stream)
-				atomic.AddUint64(&server.Downloaded, uint64(downloaded))
-				if err != nil {
-					logger.Debugf(err.Error())
-					stream.Close()
-					return
-				}
-			}()
-
-			uploaded, err := io.Copy(stream, conn)
-			atomic.AddUint64(&server.Uploaded, uint64(uploaded))
-			if err != nil {
-				logger.Debugf(err.Error())
-				stream.Close()
-				return
-			}
-		}
+		server.HandleWS(ws)
 		return
 	}
 
