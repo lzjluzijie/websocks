@@ -24,9 +24,9 @@ type MuxConn struct {
 	ID    uint64
 	muxWS *MuxWebSocket
 
-	messages []*Message
-	mutex    sync.Mutex
-	buf      []byte
+	mutex sync.Mutex
+	buf   []byte
+	wait  chan int
 
 	receiveMessageID uint64
 	sendMessageID    *uint64
@@ -34,10 +34,12 @@ type MuxConn struct {
 
 //client use
 func NewMuxConn(muxWS *MuxWebSocket) (conn *MuxConn) {
-	conn = new(MuxConn)
-	conn.muxWS = muxWS
-	conn.ID = rand.Uint64()
-	return
+	return &MuxConn{
+		ID:            rand.Uint64(),
+		muxWS:         muxWS,
+		wait:          make(chan int),
+		sendMessageID: new(uint64),
+	}
 }
 
 func (conn *MuxConn) Write(p []byte) (n int, err error) {
@@ -56,12 +58,9 @@ func (conn *MuxConn) Write(p []byte) (n int, err error) {
 }
 
 func (conn *MuxConn) Read(p []byte) (n int, err error) {
-	for {
-		if len(conn.buf) != 0 {
-			break
-		}
+	if len(conn.buf) == 0 {
+		<-conn.wait
 	}
-	println("readed")
 
 	conn.mutex.Lock()
 	n = copy(p, conn.buf)
@@ -70,15 +69,18 @@ func (conn *MuxConn) Read(p []byte) (n int, err error) {
 	return
 }
 
-func (conn *MuxConn) ReceiveMessage(m *Message) (err error) {
+func (conn *MuxConn) HandleMessage(m *Message) (err error) {
 	for {
 		if conn.receiveMessageID == m.MessageID {
 			conn.mutex.Lock()
 			conn.buf = append(conn.buf, m.Data...)
 			conn.receiveMessageID++
+			close(conn.wait)
+			conn.wait = make(chan int)
 			conn.mutex.Unlock()
 			return
 		}
+		<-conn.wait
 	}
 	return
 }
@@ -92,7 +94,15 @@ func (conn *MuxConn) DialMessage(host string) (err error) {
 		Data:      []byte(host),
 	}
 
+	logger.Debugf("dial for %s", host)
+
 	err = conn.muxWS.SendMessage(m)
+	if err != nil {
+		return
+	}
+
+	conn.muxWS.PutMuxConn(conn)
+	logger.Debugf("%d %s", conn.ID, host)
 	return
 }
 
@@ -103,12 +113,10 @@ func (conn *MuxConn) SendMessageID() (id uint64) {
 }
 
 func (conn *MuxConn) Run(c *net.TCPConn) {
-	go func() {
-		_, err := io.Copy(conn, c)
-		if err != nil {
-			logger.Debugf(err.Error())
-		}
-	}()
+	_, err := io.Copy(conn, c)
+	if err != nil {
+		logger.Debugf(err.Error())
+	}
 
 	go func() {
 		_, err := io.Copy(c, conn)

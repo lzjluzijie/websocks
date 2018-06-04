@@ -56,10 +56,7 @@ func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	if r.Header.Get("WebSocks-Mux") == "mux" {
 		muxWS := NewMuxWebSocket(ws)
-		err = muxWS.Listen()
-		if err != nil {
-			logger.Debugf(err.Error())
-		}
+		muxWS.ServerListen()
 		return
 	}
 

@@ -45,6 +45,7 @@ func (client *Client) Listen() (err error) {
 		}
 
 		client.MuxWS = muxWS
+		go client.MuxWS.ClientListen()
 	}
 
 	for {

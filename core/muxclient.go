@@ -43,8 +43,6 @@ func (client *Client) handleMuxConn(conn *net.TCPConn) {
 		return
 	}
 
-	logger.Debugf("host: %s", host)
-
 	muxConn := NewMuxConn(client.MuxWS)
 
 	err = muxConn.DialMessage(host)
@@ -53,8 +51,28 @@ func (client *Client) handleMuxConn(conn *net.TCPConn) {
 		return
 	}
 
+	logger.Debugf("dialed for %s", host)
+
 	muxConn.Run(conn)
 	return
+}
+
+func (muxWS *MuxWebSocket) ClientListen() {
+	for {
+		m, err := muxWS.ReceiveMessage()
+		if err != nil {
+			logger.Debugf(err.Error())
+			return
+		}
+
+		//get conn and send message
+		conn := muxWS.GetMuxConn(m.ConnID)
+		err = conn.HandleMessage(m)
+		if err != nil {
+			logger.Debugf(err.Error())
+			continue
+		}
+	}
 }
 
 //func (client *Client) Dial(conn *net.TCPConn, host string) {
