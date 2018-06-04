@@ -1,15 +1,12 @@
 package core
 
 import (
-	"sync"
-
 	"github.com/gorilla/websocket"
 )
 
 type WebSocket struct {
-	conn  *websocket.Conn
-	buf   []byte
-	mutex sync.Mutex
+	conn *websocket.Conn
+	buf  []byte
 }
 
 func (ws *WebSocket) Read(p []byte) (n int, err error) {
@@ -27,13 +24,11 @@ func (ws *WebSocket) Read(p []byte) (n int, err error) {
 }
 
 func (ws *WebSocket) Write(p []byte) (n int, err error) {
-	ws.mutex.Lock()
 	err = ws.conn.WriteMessage(websocket.BinaryMessage, p)
 	if err != nil {
 		return
 	}
 
-	ws.mutex.Unlock()
 	return len(p), nil
 }
 

@@ -55,7 +55,11 @@ func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	defer atomic.AddUint64(&server.Closed, 1)
 
 	if r.Header.Get("WebSocks-Mux") == "mux" {
-		server.HandleWS(ws)
+		muxWS := NewMuxWebSocket(ws)
+		err = muxWS.Listen()
+		if err != nil {
+			logger.Debugf(err.Error())
+		}
 		return
 	}
 

@@ -17,7 +17,8 @@ type Client struct {
 	ListenAddr *net.TCPAddr
 	URL        *url.URL
 
-	Mux bool
+	Mux   bool
+	MuxWS *MuxWebSocket
 
 	Dialer *websocket.Dialer
 
@@ -37,29 +38,13 @@ func (client *Client) Listen() (err error) {
 	defer listener.Close()
 
 	if client.Mux {
-		muxClient := &MuxClient{
-			Client:      client,
-			MessageChan: make(chan *Message),
+		muxWS, err := client.OpenMux()
+		if err != nil {
+			logger.Debugf(err.Error())
+			return err
 		}
 
-		for i := 0; i < 4; i++ {
-			err = muxClient.Open()
-			if err != nil {
-				logger.Debugf(err.Error())
-				return
-			}
-		}
-
-		for {
-			conn, err := listener.AcceptTCP()
-			if err != nil {
-				logger.Debugf(err.Error())
-				continue
-			}
-
-			go muxClient.handleConn(conn)
-		}
-		return
+		client.MuxWS = muxWS
 	}
 
 	for {
@@ -69,7 +54,11 @@ func (client *Client) Listen() (err error) {
 			continue
 		}
 
-		go client.handleConn(conn)
+		if client.Mux {
+			go client.handleMuxConn(conn)
+		} else {
+			go client.handleConn(conn)
+		}
 	}
 
 	return nil
