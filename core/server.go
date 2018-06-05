@@ -11,6 +11,8 @@ import (
 
 	"crypto/tls"
 
+	"sync"
+
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
 )
@@ -25,6 +27,10 @@ type Server struct {
 	Proxy      string
 
 	Upgrader *websocket.Upgrader
+
+	MessageChan chan *Message
+	muxConnMap  sync.Map
+	Mutex       sync.Mutex
 
 	CreatedAt time.Time
 
@@ -47,6 +53,12 @@ func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	atomic.AddUint64(&server.Opened, 1)
 	defer atomic.AddUint64(&server.Closed, 1)
+
+	if r.Header.Get("WebSocks-Mux") == "mux" {
+		muxWS := NewMuxWebSocket(ws)
+		muxWS.ServerListen()
+		return
+	}
 
 	host := r.Header.Get("WebSocks-Host")
 	logger.Debugf("Dial %s", host)

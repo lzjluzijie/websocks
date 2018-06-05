@@ -19,6 +19,7 @@ func (ws *WebSocket) Read(p []byte) (n int, err error) {
 
 	n = copy(p, ws.buf)
 	ws.buf = ws.buf[n:]
+
 	return
 }
 
@@ -29,4 +30,9 @@ func (ws *WebSocket) Write(p []byte) (n int, err error) {
 	}
 
 	return len(p), nil
+}
+
+func (ws *WebSocket) Close() (err error) {
+	ws.conn.Close()
+	return
 }

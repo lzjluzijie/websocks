@@ -25,7 +25,7 @@ func main() {
 
 	app := cli.NewApp()
 	app.Name = "WebSocks"
-	app.Version = "0.7.0"
+	app.Version = "0.8.0"
 	app.Usage = "A secure proxy based on WebSocket."
 	app.Description = "See https://github.com/lzjluzijie/websocks"
 	app.Author = "Halulu"
@@ -46,13 +46,17 @@ func main() {
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "l",
-					Value: ":10801",
+					Value: "127.0.0.1:10801",
 					Usage: "local listening port",
 				},
 				cli.StringFlag{
 					Name:  "s",
 					Value: "ws://localhost:23333/websocks",
 					Usage: "server url",
+				},
+				cli.BoolFlag{
+					Name:  "mux",
+					Usage: "mux mode",
 				},
 				cli.StringFlag{
 					Name:  "n",
@@ -68,6 +72,7 @@ func main() {
 				debug := c.GlobalBool("debug")
 				listenAddr := c.String("l")
 				serverURL := c.String("s")
+				mux := c.Bool("mux")
 				serverName := c.String("n")
 				insecureCert := false
 				if c.Bool("insecure") {
@@ -108,6 +113,7 @@ func main() {
 						HandshakeTimeout: 10 * time.Second,
 						TLSClientConfig:  tlsConfig,
 					},
+					Mux:       mux,
 					CreatedAt: time.Now(),
 				}
 
@@ -182,7 +188,8 @@ func main() {
 						WriteBufferSize:  4 * 1024,
 						HandshakeTimeout: 10 * time.Second,
 					},
-					CreatedAt: time.Now(),
+					MessageChan: make(chan *core.Message),
+					CreatedAt:   time.Now(),
 				}
 
 				logger.Infof("Listening at %s", listenAddr)
