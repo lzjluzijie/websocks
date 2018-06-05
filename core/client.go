@@ -38,13 +38,12 @@ func (client *Client) Listen() (err error) {
 	defer listener.Close()
 
 	if client.Mux {
-		muxWS, err := client.OpenMux()
+		err := client.OpenMux()
 		if err != nil {
 			logger.Debugf(err.Error())
 			return err
 		}
 
-		client.MuxWS = muxWS
 		go client.MuxWS.ClientListen()
 	}
 
@@ -55,11 +54,7 @@ func (client *Client) Listen() (err error) {
 			continue
 		}
 
-		if client.Mux {
-			go client.handleMuxConn(conn)
-		} else {
-			go client.handleConn(conn)
-		}
+		go client.handleConn(conn)
 	}
 
 	return nil
@@ -88,8 +83,16 @@ func (client *Client) handleConn(conn *net.TCPConn) {
 		return
 	}
 
-	logger.Debugf("host: %s", host)
+	if client.Mux {
+		client.DialMuxConn(host, conn)
+	} else {
+		client.DialWSConn(host, conn)
+	}
 
+	return
+}
+
+func (client *Client) DialWSConn(host string, conn *net.TCPConn) {
 	wsConn, _, err := client.Dialer.Dial(client.URL.String(), map[string][]string{
 		"WebSocks-Host": {host},
 	})
@@ -97,6 +100,8 @@ func (client *Client) handleConn(conn *net.TCPConn) {
 	if err != nil {
 		return
 	}
+
+	logger.Debugf("dialed ws for %s", host)
 
 	ws := &WebSocket{
 		conn: wsConn,
@@ -113,8 +118,8 @@ func (client *Client) handleConn(conn *net.TCPConn) {
 
 	_, err = io.Copy(conn, ws)
 	if err != nil {
+		logger.Debugf(err.Error())
 		return
 	}
-
 	return
 }

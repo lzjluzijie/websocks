@@ -25,7 +25,7 @@ func main() {
 
 	app := cli.NewApp()
 	app.Name = "WebSocks"
-	app.Version = "0.7.0"
+	app.Version = "0.8.0"
 	app.Usage = "A secure proxy based on WebSocket."
 	app.Description = "See https://github.com/lzjluzijie/websocks"
 	app.Author = "Halulu"

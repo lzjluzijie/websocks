@@ -89,27 +89,6 @@ func (conn *MuxConn) HandleMessage(m *Message) (err error) {
 	return
 }
 
-//client dial remote
-func (conn *MuxConn) DialMessage(host string) (err error) {
-	m := &Message{
-		Method:    MessageMethodDial,
-		MessageID: 18446744073709551615,
-		ConnID:    conn.ID,
-		Data:      []byte(host),
-	}
-
-	logger.Debugf("dial for %s", host)
-
-	err = conn.muxWS.SendMessage(m)
-	if err != nil {
-		return
-	}
-
-	conn.muxWS.PutMuxConn(conn)
-	logger.Debugf("%d %s", conn.ID, host)
-	return
-}
-
 func (conn *MuxConn) SendMessageID() (id uint64) {
 	id = atomic.LoadUint64(conn.sendMessageID)
 	atomic.AddUint64(conn.sendMessageID, 1)
