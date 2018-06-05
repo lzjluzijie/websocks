@@ -10,9 +10,9 @@ type MuxWebSocket struct {
 	Decoder *gob.Decoder
 	Encoder *gob.Encoder
 
-	connMap sync.Map
-
-	//mutex sync.RWMutex
+	muxConns  []*MuxConn
+	muxConnID []uint64
+	mutex     sync.Mutex
 }
 
 func NewMuxWebSocket(ws *WebSocket) (muxWS *MuxWebSocket) {
@@ -30,6 +30,7 @@ func NewMuxWebSocket(ws *WebSocket) (muxWS *MuxWebSocket) {
 func (muxWS *MuxWebSocket) SendMessage(m *Message) (err error) {
 	err = muxWS.Encoder.Encode(m)
 	logger.Debugf("sent %#v", m)
+	//logger.Debugf("sent message %d %d %s", m.ConnID, m.MessageID, string(m.Data))
 	return
 }
 
@@ -37,19 +38,26 @@ func (muxWS *MuxWebSocket) ReceiveMessage() (m *Message, err error) {
 	m = &Message{}
 	err = muxWS.Decoder.Decode(m)
 	logger.Debugf("received %#v", m)
+	//logger.Debugf("received message %d %d %s", m.ConnID, m.MessageID, string(m.Data))
 	return
 }
 
 func (muxWS *MuxWebSocket) PutMuxConn(conn *MuxConn) {
-	muxWS.connMap.Store(conn.ID, conn)
+	muxWS.mutex.Lock()
+	muxWS.muxConns = append(muxWS.muxConns, conn)
+	muxWS.muxConnID = append(muxWS.muxConnID, conn.ID)
+	muxWS.mutex.Unlock()
 	return
 }
 
-func (muxWS *MuxWebSocket) GetMuxConn(id uint64) (conn *MuxConn) {
-	c, ok := muxWS.connMap.Load(id)
-	if !ok {
-		panic("not ok!")
+func (muxWS *MuxWebSocket) GetMuxConn(connID uint64) (conn *MuxConn) {
+	muxWS.mutex.Lock()
+	for n, id := range muxWS.muxConnID {
+		if id == connID {
+			conn = muxWS.muxConns[n]
+			break
+		}
 	}
-
-	return c.(*MuxConn)
+	muxWS.mutex.Unlock()
+	return
 }

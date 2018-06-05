@@ -59,10 +59,12 @@ func (conn *MuxConn) Write(p []byte) (n int, err error) {
 
 func (conn *MuxConn) Read(p []byte) (n int, err error) {
 	if len(conn.buf) == 0 {
+		logger.Debugf("%d buf is 0, waiting", conn.ID)
 		<-conn.wait
 	}
 
 	conn.mutex.Lock()
+	logger.Debugf("%d buf: %v", conn.buf)
 	n = copy(p, conn.buf)
 	conn.buf = conn.buf[n:]
 	conn.mutex.Unlock()
@@ -70,6 +72,7 @@ func (conn *MuxConn) Read(p []byte) (n int, err error) {
 }
 
 func (conn *MuxConn) HandleMessage(m *Message) (err error) {
+	logger.Debugf("handle message %d %d", m.ConnID, m.MessageID)
 	for {
 		if conn.receiveMessageID == m.MessageID {
 			conn.mutex.Lock()
@@ -78,6 +81,7 @@ func (conn *MuxConn) HandleMessage(m *Message) (err error) {
 			close(conn.wait)
 			conn.wait = make(chan int)
 			conn.mutex.Unlock()
+			logger.Debugf("handled message %d %d", m.ConnID, m.MessageID)
 			return
 		}
 		<-conn.wait
@@ -113,16 +117,17 @@ func (conn *MuxConn) SendMessageID() (id uint64) {
 }
 
 func (conn *MuxConn) Run(c *net.TCPConn) {
-	_, err := io.Copy(conn, c)
-	if err != nil {
-		logger.Debugf(err.Error())
-	}
-
 	go func() {
 		_, err := io.Copy(c, conn)
 		if err != nil {
 			logger.Debugf(err.Error())
 		}
 	}()
+
+	_, err := io.Copy(conn, c)
+	if err != nil {
+		logger.Debugf(err.Error())
+	}
+
 	return
 }
