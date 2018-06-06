@@ -1,20 +1,14 @@
 package main
 
 import (
-	"net"
-	"net/url"
 	"os"
 
 	"os/exec"
 
 	"io/ioutil"
 
-	"time"
-
-	"crypto/tls"
-
-	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
+	config2 "github.com/lzjluzijie/websocks/config"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
 )
@@ -69,60 +63,19 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) (err error) {
-				debug := c.GlobalBool("debug")
-				listenAddr := c.String("l")
-				serverURL := c.String("s")
-				mux := c.Bool("mux")
-				serverName := c.String("n")
-				insecureCert := false
-				if c.Bool("insecure") {
-					insecureCert = true
-				}
-
-				if debug {
-					logger.SetLogLevel(loggo.DEBUG)
-				}
-
-				logger.Infof("Log level %s", logger.LogLevel().String())
-
-				u, err := url.Parse(serverURL)
+				config, err := config2.GetClientConfig(c)
 				if err != nil {
 					return
 				}
 
-				lAddr, err := net.ResolveTCPAddr("tcp", listenAddr)
+				client := core.NewClient(config)
+				logger.Infof("Listen at %s", client.ListenAddr)
+
+				err = client.Listen()
 				if err != nil {
 					return
 				}
-
-				tlsConfig := &tls.Config{
-					InsecureSkipVerify: insecureCert,
-				}
-
-				if serverName != "" {
-					tlsConfig.ServerName = serverName
-				}
-
-				local := core.Client{
-					LogLevel:   logger.LogLevel(),
-					ListenAddr: lAddr,
-					URL:        u,
-					Dialer: &websocket.Dialer{
-						ReadBufferSize:   4 * 1024,
-						WriteBufferSize:  4 * 1024,
-						HandshakeTimeout: 10 * time.Second,
-						TLSClientConfig:  tlsConfig,
-					},
-					Mux:       mux,
-					CreatedAt: time.Now(),
-				}
-
-				err = local.Listen()
-				if err != nil {
-					return
-				}
-
-				return nil
+				return
 			},
 		},
 		{
@@ -161,43 +114,18 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) (err error) {
-				debug := c.GlobalBool("debug")
-				listenAddr := c.String("l")
-				pattern := c.String("p")
-				tls := c.Bool("tls")
-				certPath := c.String("cert")
-				keyPath := c.String("key")
-				proxy := c.String("proxy")
-
-				if debug {
-					logger.SetLogLevel(loggo.DEBUG)
-				}
-
-				logger.Infof("Log level %s", logger.LogLevel().String())
-
-				server := core.Server{
-					LogLevel:   logger.LogLevel(),
-					Pattern:    pattern,
-					ListenAddr: listenAddr,
-					TLS:        tls,
-					CertPath:   certPath,
-					KeyPath:    keyPath,
-					Proxy:      proxy,
-					Upgrader: &websocket.Upgrader{
-						ReadBufferSize:   4 * 1024,
-						WriteBufferSize:  4 * 1024,
-						HandshakeTimeout: 10 * time.Second,
-					},
-					MessageChan: make(chan *core.Message),
-					CreatedAt:   time.Now(),
-				}
-
-				logger.Infof("Listening at %s", listenAddr)
-				err = server.Listen()
+				config, err := config2.GetServerConfig(c)
 				if err != nil {
 					return
 				}
 
+				server := core.NewServer(config)
+
+				logger.Infof("Listen at %s", server.ListenAddr)
+				err = server.Listen()
+				if err != nil {
+					return
+				}
 				return
 			},
 		},

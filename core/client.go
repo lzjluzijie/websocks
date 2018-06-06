@@ -3,26 +3,37 @@ package core
 import (
 	"io"
 	"net"
-	"net/url"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
+	"github.com/lzjluzijie/websocks/config"
 )
 
 var logger = loggo.GetLogger("core")
 
 type Client struct {
-	LogLevel   loggo.Level
-	ListenAddr *net.TCPAddr
-	URL        *url.URL
-
-	Mux   bool
-	MuxWS *MuxWebSocket
+	*config.ClientConfig
 
 	Dialer *websocket.Dialer
+	MuxWS  *MuxWebSocket
 
 	CreatedAt time.Time
+}
+
+//NewClient create a client from config
+func NewClient(config *config.ClientConfig) (client *Client) {
+	client = &Client{
+		ClientConfig: config,
+		Dialer: &websocket.Dialer{
+			ReadBufferSize:   4 * 1024,
+			WriteBufferSize:  4 * 1024,
+			HandshakeTimeout: 10 * time.Second,
+			TLSClientConfig:  config.TLSConfig,
+		},
+		CreatedAt: time.Now(),
+	}
+	return
 }
 
 func (client *Client) Listen() (err error) {
@@ -67,19 +78,19 @@ func (client *Client) handleConn(conn *net.TCPConn) {
 
 	err := handShake(conn)
 	if err != nil {
-		logger.Errorf(err.Error())
+		logger.Debugf(err.Error())
 		return
 	}
 
 	_, host, err := getRequest(conn)
 	if err != nil {
-		logger.Errorf(err.Error())
+		logger.Debugf(err.Error())
 		return
 	}
 
 	_, err = conn.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x08, 0x43})
 	if err != nil {
-		logger.Errorf(err.Error())
+		logger.Debugf(err.Error())
 		return
 	}
 

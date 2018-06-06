@@ -14,30 +14,35 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/juju/loggo"
+	"github.com/lzjluzijie/websocks/config"
 )
 
 type Server struct {
-	LogLevel   loggo.Level
-	Pattern    string
-	ListenAddr string
-	TLS        bool
-	CertPath   string
-	KeyPath    string
-	Proxy      string
+	*config.ServerConfig
 
-	Upgrader *websocket.Upgrader
+	Upgrader   *websocket.Upgrader
+	muxConnMap sync.Map
+	Mutex      sync.Mutex
 
-	MessageChan chan *Message
-	muxConnMap  sync.Map
-	Mutex       sync.Mutex
-
-	CreatedAt time.Time
-
+	CreatedAt  time.Time
 	Opened     uint64
 	Closed     uint64
 	Uploaded   uint64
 	Downloaded uint64
+}
+
+//NewServer create a server from config
+func NewServer(config *config.ServerConfig) (server *Server) {
+	server = &Server{
+		ServerConfig: config,
+		Upgrader: &websocket.Upgrader{
+			ReadBufferSize:   4 * 1024,
+			WriteBufferSize:  4 * 1024,
+			HandshakeTimeout: 10 * time.Second,
+		},
+		CreatedAt: time.Now(),
+	}
+	return
 }
 
 func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
