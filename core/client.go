@@ -5,7 +5,6 @@ import (
 	"net"
 	"time"
 
-	"crypto/tls"
 	"net/url"
 
 	"github.com/gorilla/websocket"
@@ -13,19 +12,23 @@ import (
 )
 
 type ClientConfig struct {
-	LogLevel   loggo.Level
-	ListenAddr *net.TCPAddr
-	URL        *url.URL
-	TLSConfig  *tls.Config
-	Mux        bool
+	ListenAddr string
+	ServerURL  string
+
+	SNI          string
+	InsecureCert bool
+
+	Mux bool
 }
 
 type Client struct {
 	*ClientConfig
 	LogLevel loggo.Level
 
-	Dialer *websocket.Dialer
-	MuxWS  *MuxWebSocket
+	ServerURL  *url.URL
+	ListenAddr *net.TCPAddr
+	Dialer     *websocket.Dialer
+	muxWS      *MuxWebSocket
 
 	CreatedAt time.Time
 }
@@ -49,7 +52,7 @@ func (client *Client) Listen() (err error) {
 			return err
 		}
 
-		go client.MuxWS.ClientListen()
+		go client.muxWS.ClientListen()
 	}
 
 	for {
@@ -98,7 +101,7 @@ func (client *Client) handleConn(conn *net.TCPConn) {
 }
 
 func (client *Client) DialWSConn(host string, conn *net.TCPConn) {
-	wsConn, _, err := client.Dialer.Dial(client.URL.String(), map[string][]string{
+	wsConn, _, err := client.Dialer.Dial(client.ServerURL.String(), map[string][]string{
 		"WebSocks-Host": {host},
 	})
 

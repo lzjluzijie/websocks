@@ -80,7 +80,7 @@ var Command = cli.Command{
 					Usage: "tls key path",
 				},
 				cli.StringFlag{
-					Name:  "proxy",
+					Name:  "reverse-proxy",
 					Value: "",
 					Usage: "reverse proxy url, leave blank to disable",
 				},

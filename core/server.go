@@ -18,12 +18,12 @@ import (
 )
 
 type ServerConfig struct {
-	ListenAddr string
-	Pattern    string
-	TLS        bool
-	CertPath   string
-	KeyPath    string
-	Proxy      string
+	ListenAddr   string
+	Pattern      string
+	TLS          bool
+	CertPath     string
+	KeyPath      string
+	ReverseProxy string
 }
 
 type Server struct {
@@ -32,7 +32,7 @@ type Server struct {
 
 	Upgrader   *websocket.Upgrader
 	muxConnMap sync.Map
-	Mutex      sync.Mutex
+	mutex      sync.Mutex
 
 	CreatedAt  time.Time
 	Opened     uint64

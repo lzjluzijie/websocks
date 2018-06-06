@@ -28,15 +28,34 @@ func GetClientConfig(path string) (client *core.Client, err error) {
 		return
 	}
 
+	//tackle config
+	serverURL, err := url.Parse(config.ServerURL)
+	if err != nil {
+		return
+	}
+
+	laddr, err := net.ResolveTCPAddr("tcp", config.ListenAddr)
+	if err != nil {
+		return
+	}
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: config.InsecureCert,
+		ServerName:         config.SNI,
+	}
+
 	client = &core.Client{
 		ClientConfig: config,
 
+		ServerURL:  serverURL,
+		ListenAddr: laddr,
 		Dialer: &websocket.Dialer{
 			ReadBufferSize:   4 * 1024,
 			WriteBufferSize:  4 * 1024,
 			HandshakeTimeout: 10 * time.Second,
-			TLSClientConfig:  config.TLSConfig,
+			TLSClientConfig:  tlsConfig,
 		},
+
 		CreatedAt: time.Now(),
 	}
 	return
@@ -45,37 +64,13 @@ func GetClientConfig(path string) (client *core.Client, err error) {
 //GenerateClientConfig create a client config from cli.Context
 func GenerateClientConfig(c *cli.Context) (err error) {
 	path := c.String("path")
-	listenAddr := c.String("l")
-	serverURL := c.String("s")
-	mux := c.Bool("mux")
-	serverName := c.String("n")
-	insecureCert := false
-	if c.Bool("insecure") {
-		insecureCert = true
-	}
-
-	u, err := url.Parse(serverURL)
-	if err != nil {
-		return
-	}
-
-	lAddr, err := net.ResolveTCPAddr("tcp", listenAddr)
-	if err != nil {
-		return
-	}
-
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: insecureCert,
-	}
-
-	if serverName != "" {
-		tlsConfig.ServerName = serverName
-	}
 
 	config := &core.ClientConfig{
-		ListenAddr: lAddr,
-		URL:        u,
-		Mux:        mux,
+		ListenAddr:   c.String("l"),
+		ServerURL:    c.String("s"),
+		SNI:          c.String("sni"),
+		InsecureCert: c.Bool("insecure"),
+		Mux:          c.Bool("mux"),
 	}
 
 	data, err := json.MarshalIndent(config, "", "    ")

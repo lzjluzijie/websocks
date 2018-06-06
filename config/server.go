@@ -47,12 +47,12 @@ func GenerateServerConfig(c *cli.Context) (err error) {
 	proxy := c.String("proxy")
 
 	config := &core.ServerConfig{
-		Pattern:    pattern,
-		ListenAddr: listenAddr,
-		TLS:        tls,
-		CertPath:   certPath,
-		KeyPath:    keyPath,
-		Proxy:      proxy,
+		Pattern:      pattern,
+		ListenAddr:   listenAddr,
+		TLS:          tls,
+		CertPath:     certPath,
+		KeyPath:      keyPath,
+		ReverseProxy: proxy,
 	}
 
 	data, err := json.MarshalIndent(config, "", "    ")
