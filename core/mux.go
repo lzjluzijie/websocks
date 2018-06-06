@@ -32,7 +32,7 @@ type MuxConn struct {
 	sendMessageID    *uint64
 }
 
-//client use
+//NewMuxConn create new mux connection for client
 func NewMuxConn(muxWS *MuxWebSocket) (conn *MuxConn) {
 	return &MuxConn{
 		ID:            rand.Uint64(),

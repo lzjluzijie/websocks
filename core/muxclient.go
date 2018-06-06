@@ -23,7 +23,7 @@ func (muxWS *MuxWebSocket) ClientListen() {
 }
 
 func (client *Client) OpenMux() (err error) {
-	wsConn, _, err := client.Dialer.Dial(client.URL.String(), map[string][]string{
+	wsConn, _, err := client.Dialer.Dial(client.ServerURL.String(), map[string][]string{
 		"WebSocks-Mux": {"mux"},
 	})
 
@@ -36,11 +36,11 @@ func (client *Client) OpenMux() (err error) {
 	}
 
 	muxWS := NewMuxWebSocket(ws)
-	client.MuxWS = muxWS
+	client.muxWS = muxWS
 	return
 }
 func (client *Client) DialMuxConn(host string, conn *net.TCPConn) {
-	muxConn := NewMuxConn(client.MuxWS)
+	muxConn := NewMuxConn(client.muxWS)
 
 	err := muxConn.DialMessage(host)
 	if err != nil {

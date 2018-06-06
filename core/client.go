@@ -3,25 +3,34 @@ package core
 import (
 	"io"
 	"net"
-	"net/url"
 	"time"
+
+	"net/url"
 
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
 )
 
-var logger = loggo.GetLogger("core")
+type ClientConfig struct {
+	ListenAddr string
+	ServerURL  string
+
+	SNI          string
+	InsecureCert bool
+
+	Mux bool
+}
 
 type Client struct {
-	LogLevel   loggo.Level
+	*ClientConfig
+	LogLevel loggo.Level
+
+	ServerURL  *url.URL
 	ListenAddr *net.TCPAddr
-	URL        *url.URL
+	Dialer     *websocket.Dialer
+	muxWS      *MuxWebSocket
 
-	Mux   bool
-	MuxWS *MuxWebSocket
-
-	Dialer *websocket.Dialer
-
+	//statistics
 	CreatedAt time.Time
 }
 
@@ -44,7 +53,7 @@ func (client *Client) Listen() (err error) {
 			return err
 		}
 
-		go client.MuxWS.ClientListen()
+		go client.muxWS.ClientListen()
 	}
 
 	for {
@@ -67,19 +76,19 @@ func (client *Client) handleConn(conn *net.TCPConn) {
 
 	err := handShake(conn)
 	if err != nil {
-		logger.Errorf(err.Error())
+		logger.Debugf(err.Error())
 		return
 	}
 
 	_, host, err := getRequest(conn)
 	if err != nil {
-		logger.Errorf(err.Error())
+		logger.Debugf(err.Error())
 		return
 	}
 
 	_, err = conn.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x08, 0x43})
 	if err != nil {
-		logger.Errorf(err.Error())
+		logger.Debugf(err.Error())
 		return
 	}
 
@@ -93,13 +102,14 @@ func (client *Client) handleConn(conn *net.TCPConn) {
 }
 
 func (client *Client) DialWSConn(host string, conn *net.TCPConn) {
-	wsConn, _, err := client.Dialer.Dial(client.URL.String(), map[string][]string{
+	wsConn, _, err := client.Dialer.Dial(client.ServerURL.String(), map[string][]string{
 		"WebSocks-Host": {host},
 	})
 
 	if err != nil {
 		return
 	}
+	defer wsConn.Close()
 
 	logger.Debugf("dialed ws for %s", host)
 

@@ -17,9 +17,9 @@ func (server *Server) getMacaron() (m *macaron.Macaron) {
 		m.Get("/status", server.getStatus)
 	})
 
-	if server.Proxy != "" {
+	if server.ReverseProxy != "" {
 		m.NotFound(func(w http.ResponseWriter, r *http.Request) {
-			remote, err := url.Parse(server.Proxy)
+			remote, err := url.Parse(server.ReverseProxy)
 			if err != nil {
 				panic(err)
 			}
