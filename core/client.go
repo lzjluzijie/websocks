@@ -5,35 +5,29 @@ import (
 	"net"
 	"time"
 
+	"crypto/tls"
+	"net/url"
+
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
-	"github.com/lzjluzijie/websocks/config"
 )
 
-var logger = loggo.GetLogger("core")
+type ClientConfig struct {
+	LogLevel   loggo.Level
+	ListenAddr *net.TCPAddr
+	URL        *url.URL
+	TLSConfig  *tls.Config
+	Mux        bool
+}
 
 type Client struct {
-	*config.ClientConfig
+	*ClientConfig
+	LogLevel loggo.Level
 
 	Dialer *websocket.Dialer
 	MuxWS  *MuxWebSocket
 
 	CreatedAt time.Time
-}
-
-//NewClient create a client from config
-func NewClient(config *config.ClientConfig) (client *Client) {
-	client = &Client{
-		ClientConfig: config,
-		Dialer: &websocket.Dialer{
-			ReadBufferSize:   4 * 1024,
-			WriteBufferSize:  4 * 1024,
-			HandshakeTimeout: 10 * time.Second,
-			TLSClientConfig:  config.TLSConfig,
-		},
-		CreatedAt: time.Now(),
-	}
-	return
 }
 
 func (client *Client) Listen() (err error) {

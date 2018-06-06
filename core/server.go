@@ -14,11 +14,21 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/lzjluzijie/websocks/config"
+	"github.com/juju/loggo"
 )
 
+type ServerConfig struct {
+	ListenAddr string
+	Pattern    string
+	TLS        bool
+	CertPath   string
+	KeyPath    string
+	Proxy      string
+}
+
 type Server struct {
-	*config.ServerConfig
+	*ServerConfig
+	LogLevel loggo.Level
 
 	Upgrader   *websocket.Upgrader
 	muxConnMap sync.Map
@@ -29,20 +39,6 @@ type Server struct {
 	Closed     uint64
 	Uploaded   uint64
 	Downloaded uint64
-}
-
-//NewServer create a server from config
-func NewServer(config *config.ServerConfig) (server *Server) {
-	server = &Server{
-		ServerConfig: config,
-		Upgrader: &websocket.Upgrader{
-			ReadBufferSize:   4 * 1024,
-			WriteBufferSize:  4 * 1024,
-			HandshakeTimeout: 10 * time.Second,
-		},
-		CreatedAt: time.Now(),
-	}
-	return
 }
 
 func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -114,6 +110,8 @@ func (server *Server) Listen() (err error) {
 		Handler: server.getMacaron(),
 	}
 
+	logger.Infof("Start to listen at %s", server.ListenAddr)
+
 	if !server.TLS {
 		err = s.ListenAndServe()
 		if err != nil {
@@ -121,7 +119,7 @@ func (server *Server) Listen() (err error) {
 		}
 		return
 	} else {
-		tlsConfig := &tls.Config{
+		s.TLSConfig = &tls.Config{
 			CipherSuites: []uint16{
 				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
 				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
@@ -132,7 +130,6 @@ func (server *Server) Listen() (err error) {
 			},
 		}
 
-		s.TLSConfig = tlsConfig
 		err = s.ListenAndServeTLS(server.CertPath, server.KeyPath)
 		if err != nil {
 			return err

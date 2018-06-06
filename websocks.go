@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 
 	"github.com/juju/loggo"
-	config2 "github.com/lzjluzijie/websocks/config"
+	"github.com/lzjluzijie/websocks/config"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
 )
@@ -33,43 +33,32 @@ func main() {
 	}
 
 	app.Commands = []cli.Command{
+		config.Command,
 		{
 			Name:    "client",
 			Aliases: []string{"c"},
 			Usage:   "start websocks client",
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "l",
-					Value: "127.0.0.1:10801",
-					Usage: "local listening port",
-				},
-				cli.StringFlag{
-					Name:  "s",
-					Value: "ws://localhost:23333/websocks",
-					Usage: "server url",
-				},
-				cli.BoolFlag{
-					Name:  "mux",
-					Usage: "mux mode",
-				},
-				cli.StringFlag{
-					Name:  "n",
-					Value: "",
-					Usage: "fake server name for tls client hello, leave blank to disable",
-				},
-				cli.BoolFlag{
-					Name:  "insecure",
-					Usage: "InsecureSkipVerify: true",
+					Name:  "c",
+					Value: "client.config.json",
+					Usage: "client config path",
 				},
 			},
 			Action: func(c *cli.Context) (err error) {
-				config, err := config2.GetClientConfig(c)
+				path := c.String("c")
+				debug := c.GlobalBool("debug")
+
+				client, err := config.GetClientConfig(path)
 				if err != nil {
 					return
 				}
 
-				client := core.NewClient(config)
-				logger.Infof("Listen at %s", client.ListenAddr)
+				logLevel := loggo.INFO
+				if debug {
+					logLevel = loggo.DEBUG
+				}
+				client.LogLevel = logLevel
 
 				err = client.Listen()
 				if err != nil {
@@ -84,44 +73,26 @@ func main() {
 			Usage:   "start websocks server",
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "l",
-					Value: "0.0.0.0:23333",
-					Usage: "local listening port",
-				},
-				cli.StringFlag{
-					Name:  "p",
-					Value: "/websocks",
-					Usage: "server.com/pattern, like password, start with '/'",
-				},
-				cli.BoolFlag{
-					Name:  "tls",
-					Usage: "enable built-in tls",
-				},
-				cli.StringFlag{
-					Name:  "cert",
-					Value: "websocks.cer",
-					Usage: "tls cert path",
-				},
-				cli.StringFlag{
-					Name:  "key",
-					Value: "websocks.key",
-					Usage: "tls key path",
-				},
-				cli.StringFlag{
-					Name:  "proxy",
-					Value: "",
-					Usage: "reverse proxy url, leave blank to disable",
+					Name:  "c",
+					Value: "server.config.json",
+					Usage: "server config path",
 				},
 			},
 			Action: func(c *cli.Context) (err error) {
-				config, err := config2.GetServerConfig(c)
+				path := c.String("c")
+				debug := c.GlobalBool("debug")
+
+				server, err := config.GetServerConfig(path)
 				if err != nil {
 					return
 				}
 
-				server := core.NewServer(config)
+				logLevel := loggo.INFO
+				if debug {
+					logLevel = loggo.DEBUG
+				}
+				server.LogLevel = logLevel
 
-				logger.Infof("Listen at %s", server.ListenAddr)
 				err = server.Listen()
 				if err != nil {
 					return
@@ -183,5 +154,4 @@ func main() {
 	if err != nil {
 		logger.Errorf(err.Error())
 	}
-
 }
