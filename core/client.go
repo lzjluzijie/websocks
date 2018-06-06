@@ -30,6 +30,7 @@ type Client struct {
 	Dialer     *websocket.Dialer
 	muxWS      *MuxWebSocket
 
+	//statistics
 	CreatedAt time.Time
 }
 
@@ -108,6 +109,7 @@ func (client *Client) DialWSConn(host string, conn *net.TCPConn) {
 	if err != nil {
 		return
 	}
+	defer wsConn.Close()
 
 	logger.Debugf("dialed ws for %s", host)
 

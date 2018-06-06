@@ -4,7 +4,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"sync/atomic"
 	"time"
 
 	"fmt"
@@ -34,11 +33,13 @@ type Server struct {
 	muxConnMap sync.Map
 	mutex      sync.Mutex
 
-	CreatedAt  time.Time
-	Opened     uint64
-	Closed     uint64
-	Uploaded   uint64
-	Downloaded uint64
+	//statistics
+	CreatedAt       time.Time
+	statMutex       sync.Mutex
+	openedConn      uint64
+	closedConn      uint64
+	downloadedBytes uint64
+	uploadedBytes   uint64
 }
 
 func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -47,14 +48,16 @@ func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		logger.Debugf(err.Error())
 		return
 	}
+	defer c.Close()
 
 	ws := &WebSocket{
 		conn: c,
 	}
 
-	atomic.AddUint64(&server.Opened, 1)
-	defer atomic.AddUint64(&server.Closed, 1)
+	server.openConn()
+	defer server.closeConn()
 
+	//mux
 	if r.Header.Get("WebSocks-Mux") == "mux" {
 		muxWS := NewMuxWebSocket(ws)
 		muxWS.ServerListen()
@@ -66,16 +69,14 @@ func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := net.Dial("tcp", host)
 	if err != nil {
-		if err != nil {
-			logger.Debugf(err.Error())
-		}
+		logger.Debugf(err.Error())
 		return
 	}
 	defer conn.Close()
 
 	go func() {
 		downloaded, err := io.Copy(conn, ws)
-		atomic.AddUint64(&server.Downloaded, uint64(downloaded))
+		server.downloaded(uint64(downloaded))
 		if err != nil {
 			logger.Debugf(err.Error())
 			return
@@ -83,16 +84,41 @@ func (server *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	uploaded, err := io.Copy(ws, conn)
-	atomic.AddUint64(&server.Uploaded, uint64(uploaded))
+	server.uploaded(uint64(uploaded))
 	if err != nil {
 		logger.Debugf(err.Error())
 		return
 	}
+
 	return
 }
 
+func (server *Server) openConn() {
+	server.statMutex.Lock()
+	server.openedConn++
+	server.statMutex.Unlock()
+}
+
+func (server *Server) closeConn() {
+	server.statMutex.Lock()
+	server.closedConn++
+	server.statMutex.Unlock()
+}
+
+func (server *Server) downloaded(d uint64) {
+	server.statMutex.Lock()
+	server.downloadedBytes += d
+	server.statMutex.Unlock()
+}
+
+func (server *Server) uploaded(u uint64) {
+	server.statMutex.Lock()
+	server.uploadedBytes += u
+	server.statMutex.Unlock()
+}
+
 func (server *Server) status() string {
-	return fmt.Sprintf("%ds: opened %d, closed %d, uploaded %d bytes, downloaded %d bytes", int(time.Since(server.CreatedAt).Seconds()), server.Opened, server.Closed, server.Uploaded, server.Downloaded)
+	return fmt.Sprintf("%ds: opened %d, closed %d, uploaded %d bytes, downloaded %d bytes", int(time.Since(server.CreatedAt).Seconds()), server.openedConn, server.closedConn, server.uploadedBytes, server.downloadedBytes)
 }
 
 func (server *Server) Listen() (err error) {
@@ -101,7 +127,7 @@ func (server *Server) Listen() (err error) {
 	go func() {
 		for {
 			time.Sleep(time.Second)
-			logger.Debugf("%ds: opened %d, closed %d, uploaded %d bytes, downloaded %d bytes", int(time.Since(server.CreatedAt).Seconds()), server.Opened, server.Closed, server.Uploaded, server.Downloaded)
+			logger.Debugf("%ds: opened %d, closed %d, uploaded %d bytes, downloaded %d bytes", int(time.Since(server.CreatedAt).Seconds()), server.openedConn, server.closedConn, server.uploadedBytes, server.downloadedBytes)
 		}
 	}()
 
