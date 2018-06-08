@@ -44,7 +44,7 @@ func GenerateServerConfig(c *cli.Context) (err error) {
 	tls := c.Bool("tls")
 	certPath := c.String("cert")
 	keyPath := c.String("key")
-	proxy := c.String("proxy")
+	reverseProxy := c.String("reverse-proxy")
 
 	config := &core.ServerConfig{
 		Pattern:      pattern,
@@ -52,7 +52,7 @@ func GenerateServerConfig(c *cli.Context) (err error) {
 		TLS:          tls,
 		CertPath:     certPath,
 		KeyPath:      keyPath,
-		ReverseProxy: proxy,
+		ReverseProxy: reverseProxy,
 	}
 
 	data, err := json.MarshalIndent(config, "", "    ")
