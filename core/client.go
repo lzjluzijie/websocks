@@ -107,6 +107,7 @@ func (client *Client) DialWSConn(host string, conn *net.TCPConn) {
 	})
 
 	if err != nil {
+		logger.Errorf(err.Error())
 		return
 	}
 	defer wsConn.Close()
