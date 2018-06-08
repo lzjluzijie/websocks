@@ -1,49 +1,51 @@
 # WebSocks
 
-[教程资源](https://zhuji.lu/tags/websocks)
-[中文说明](https://github.com/lzjluzijie/websocks/blob/master/README-zh.md)
-[Telegram Group](https://t.me/websocks)
+[English](https://github.com/lzjluzijie/websocks/blob/master/README-en.md)
 
-A secure proxy based on websocket.
+一个基于 WebSocket 的代理工具
 
-This project is still working in progress, more features are still in development. If you are interested in this project, please star this project in order to support me. Thank you.
+本项目目前还在开发中，更多功能仍在完善中。如果你对这个项目感兴趣，请star它来支持我，蟹蟹
 
-If you have any problems or suggestions, please do not hesitate to submit issues or contact me [@halulu](https://t.me/halulu). We also have a [telegram group](https://t.me/websocks) (mostly Chinese, English is ok).
+有任何问题或建议可以直接发issue或者联系我 [@halulu](https://t.me/halulu)，也可以来[TG群](https://t.me/websocks)水一水，开发记录可以看[我的博客](https://halu.lu/post/websocks-development/)
 
-Advantages:
+优点
+ - 使用WS+TLS，十分安全且不易被检测，和普通HTTPS网站一样
+ - 可以搭配使用cloudflare这类cdn，完全不怕被墙！
 
-- Using WebSocket and TLS which are very secure and difficult to be detected, same as regular HTTPS websites
-- Can be used with cdn such as cloudflare, not afraid of gfw at all!
+缺点就是刚刚开始开发，没有GUI客户端，功能也比较少，如果你能来帮我那就太好了！
 
-The disadvantage is that I have just started development, there is no GUI client, and features are not enough. I will appreciate if you can help me!
+[官网](https://websocks.org/)|[社区](https://zhuji.lu/tags/websocks)|[测试节点](https://zhuji.lu/topic/39/websocks测试节点)|[一键脚本](https://zhuji.lu/topic/15/websocks-一键脚本-简易安装教程)|[电报群](https://t.me/websocks)
 
-To-Do: WebSocks mux
+## 示例
 
-## Example
+### 内置 TLS 混淆域名并反向代理
 
-### Built-in TLS with fake server name and reversing proxy
-
-#### Server
+#### 服务端
 ```
 ./websocks cert
-./websocks server -l :2333 -p /password --proxy https://www.centos.org/ --tls
+./websocks config server -l :2333 -p /password --reverse-proxy https://www.centos.org/ --tls
+./websocks server
 ```
 
-#### Local
+#### 客户端
 ```
-./websocks client -l :1080 -s wss://the-real-server.com:2333/password -n www.centos.com --insecure
+./websocks config client -l :1080 -s wss://server.com:2333/password -n www.centos.com --insecure
+./websocks client
 ```
+
 
 ### Caddy TLS
 
-#### Server
+#### 服务端
 ```
-./websocks server -l :2333 -p /password
+./websocks config server -l :2333 -p /password
+./websocks server
 ```
 
-#### Local
+#### 客户端
 ```
-./websocks client -l :1080 -s wss://server.com/password
+./websocks config client -l :1080 -s wss://server.com/password
+./websocks client
 ```
 
 #### Caddyfile
