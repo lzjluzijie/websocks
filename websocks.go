@@ -3,14 +3,15 @@ package main
 import (
 	"os"
 
-	"os/exec"
-
 	"io/ioutil"
 
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/config"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
+	"runtime"
+	"errors"
+	"golang.org/x/sys/windows/registry"
 )
 
 func main() {
@@ -101,15 +102,6 @@ func main() {
 			},
 		},
 		{
-			Name:    "github",
-			Aliases: []string{"github"},
-			Usage:   "open official github page",
-			Action: func(c *cli.Context) (err error) {
-				err = exec.Command("explorer", "https://github.com/lzjluzijie/websocks").Run()
-				return
-			},
-		},
-		{
 			Name:    "cert",
 			Aliases: []string{"cert"},
 			Usage:   "generate self signed key and cert(default rsa 2048)",
@@ -145,6 +137,25 @@ func main() {
 				if err != nil {
 					return
 				}
+				return
+			},
+		},
+		{
+			Name:    "pac",
+			Aliases: []string{"pac"},
+			Usage:   "set pac for windows",
+			Action: func(c *cli.Context) (err error) {
+				if runtime.GOOS != "windows" {
+					err = errors.New("not windows")
+					return
+				}
+
+				k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.ALL_ACCESS)
+				if err != nil{
+					return
+				}
+
+				err = k.SetStringValue("AutoConfigURL", "http://127.0.0.1:23333/pac")
 				return
 			},
 		},
