@@ -61,9 +61,9 @@ var Command = cli.Command{
 					Usage: "local listening port",
 				},
 				cli.StringFlag{
-					Name:  "p",
+					Name:  "pattern",
 					Value: "/websocks",
-					Usage: "server.com/pattern, like password, start with '/'",
+					Usage: "server.com/pattern",
 				},
 				cli.BoolFlag{
 					Name:  "tls",

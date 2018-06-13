@@ -5,12 +5,13 @@ import (
 
 	"io/ioutil"
 
+	"errors"
+	"runtime"
+
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/config"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
-	"runtime"
-	"errors"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -151,11 +152,11 @@ func main() {
 				}
 
 				k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.ALL_ACCESS)
-				if err != nil{
+				if err != nil {
 					return
 				}
 
-				err = k.SetStringValue("AutoConfigURL", "http://127.0.0.1:23333/pac")
+				err = k.SetStringValue("AutoConfigURL", "http://127.0.0.1:10801/pac")
 				return
 			},
 		},
