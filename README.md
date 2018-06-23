@@ -14,7 +14,7 @@
 
 缺点就是刚刚开始开发，没有GUI客户端，功能也比较少，如果你能来帮我那就太好了！
 
-[官网](https://websocks.org/)|[社区](https://zhuji.lu/tags/websocks)|[测试节点](https://zhuji.lu/topic/39/websocks测试节点)|[一键脚本](https://zhuji.lu/topic/15/websocks-一键脚本-简易安装教程)|[电报群](https://t.me/websocks)
+[官网](https://websocks.org/)|[社区](https://zhuji.lu/tags/websocks)|[一键脚本](https://zhuji.lu/topic/15/websocks-一键脚本-简易安装教程)|[电报群](https://t.me/websocks)
 
 ## 示例
 
