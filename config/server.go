@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/lzjluzijie/websocks/core"
+	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 )
 
@@ -40,11 +41,16 @@ func GetServerConfig(path string) (server *core.Server, err error) {
 func GenerateServerConfig(c *cli.Context) (err error) {
 	path := c.String("path")
 	listenAddr := c.String("l")
-	pattern := c.String("p")
+	pattern := c.String("pattern")
 	tls := c.Bool("tls")
 	certPath := c.String("cert")
 	keyPath := c.String("key")
 	reverseProxy := c.String("reverse-proxy")
+
+	if []byte(pattern)[0] != '/' {
+		err = errors.New("pattern does not start with '/'")
+		return
+	}
 
 	config := &core.ServerConfig{
 		Pattern:      pattern,
