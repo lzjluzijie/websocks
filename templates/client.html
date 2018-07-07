@@ -1,4 +1,29 @@
-{% extends "base/base.html" %} {% block body %}
+{% extends "base/base.html" %}
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-switch@2.0.0/dist/css/bulma-switch.min.css"
+      integrity="sha256-jCV/cXwP13w0GNHLgFx6SFgTNAvJPvS5MIhuE30Ng08=" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.min.js"
+        integrity="sha256-mpnrJ5DpEZZkwkE1ZgkEQQJW/46CSEh/STrZKOB/qoM=" crossorigin="anonymous"></script>
+<script>
+    function Run() {
+        let params = new URLSearchParams();
+        params.append("ListenAddr", document.getElementById("ListenAddr").value);
+        params.append("ServerURL", document.getElementById("ServerURL").value);
+        params.append("SNI", document.getElementById("SNI").value);
+        params.append("InsecureCert", document.getElementById("InsecureCert").value);
+        //todo bool
+        console.log(document.getElementById("InsecureCert").checked);
+        axios.post('/api/client', params)
+                .then(function (response) {
+                    console.log(response);
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+    }
+</script>
+{% endblock %}
+{% block body %}
 <section class="section">
     <div class="container">
         <h1 class="title">
@@ -8,23 +33,45 @@
             A secure proxy based on websocket.
         </p>
 
-        <form action="/api/client" method="post">
-            <div class="field">
-                <label class="label">Server URL</label>
-                <div class="control">
-                    <input class="input" type="text" placeholder="wss://server.com:2333/password">
-                </div>
+    </div>
+</section>
 
-                <div class="field">
-                    <p class="control">
-                        <button class="button">
-                            Start
-                        </button>
-                    </p>
-                </div>
+<section>
+    <div class="container">
+        <div class="field">
+            <label class="label">ListenAddr</label>
+            <div class="control">
+                <input class="input" type="text" id="ListenAddr" name="ListenAddr" placeholder=":10801">
             </div>
-        </form>
+        </div>
 
+        <div class="field">
+            <label class="label">ServerURL</label>
+            <div class="control">
+                <input class="input" type="text" id="ServerURL" name="ServerURL"
+                       placeholder="wss://server.com:2333/password">
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label">SNI</label>
+            <div class="control">
+                <input class="input" type="text" id="SNI" name="SNI" placeholder="mirror.centos.org">
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="control">
+                <input type="checkbox" id="InsecureCert" name="InsecureCert" class="switch" checked="checked">
+                <label for="InsecureCert">InsecureCert</label>
+            </div>
+        </div>
+
+        <div class="field">
+            <p class="control">
+                <button class="button" onclick="Run()">Start</button>
+            </p>
+        </div>
     </div>
 </section>
 {% endblock %}

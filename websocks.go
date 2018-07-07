@@ -12,6 +12,10 @@ import (
 
 	"net/http"
 
+	"encoding/json"
+	"fmt"
+	"log"
+
 	"github.com/go-macaron/pongo2"
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/config"
@@ -62,7 +66,13 @@ func main() {
 					return
 				}
 
-				webSocksClient, err := client.GetClientConfig(data)
+				clientConfig := &client.WebSocksClientConfig{}
+				err = json.Unmarshal(data, clientConfig)
+				if err != nil {
+					return
+				}
+
+				webSocksClient, err := client.GetClient(clientConfig)
 				if err != nil {
 					return
 				}
@@ -175,6 +185,41 @@ func main() {
 				m.Use(pongo2.Pongoer())
 				m.Get("/", func(ctx *macaron.Context) {
 					ctx.HTML(200, "client")
+					return
+				})
+
+				m.Post("/api/client", func(ctx *macaron.Context) {
+					listenAddr := ctx.Query("ListenAddr")
+					serverURL := ctx.Query("ServerURL")
+					sni := ctx.Query("SNI")
+					insecureCertS := ctx.Query("InsecureCert")
+					insecureCert := false
+					if insecureCertS == "on" {
+						insecureCert = true
+					}
+
+					webSocksClientConfig := &client.WebSocksClientConfig{
+						ListenAddr:   listenAddr,
+						ServerURL:    serverURL,
+						SNI:          sni,
+						InsecureCert: insecureCert,
+					}
+
+					websocksClient, err := client.GetClient(webSocksClientConfig)
+					if err != nil {
+						ctx.Error(403, err.Error())
+					}
+
+					ctx.WriteHeader(200)
+					ctx.Write([]byte(fmt.Sprintf("%v", webSocksClientConfig)))
+
+					go func() {
+						websocksClient.LogLevel = loggo.DEBUG
+						err = websocksClient.Listen()
+						if err != nil {
+							log.Println(err.Error())
+						}
+					}()
 					return
 				})
 

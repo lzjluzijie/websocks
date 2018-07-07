@@ -13,14 +13,7 @@ import (
 )
 
 //GetClient return client from path
-func GetClientConfig(data []byte) (client *WebSocksClient, err error) {
-	//read config
-	config := &WebSocksClientConfig{}
-	err = json.Unmarshal(data, config)
-	if err != nil {
-		return
-	}
-
+func GetClient(config *WebSocksClientConfig) (client *WebSocksClient, err error) {
 	//tackle config
 	serverURL, err := url.Parse(config.ServerURL)
 	if err != nil {
