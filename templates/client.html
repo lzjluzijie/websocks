@@ -1,4 +1,4 @@
-{% extends "base/base.html" %}
+{% extends "base/base.html" %} {% block body %}
 <section class="section">
     <div class="container">
         <h1 class="title">
@@ -7,6 +7,24 @@
         <p class="subtitle">
             A secure proxy based on websocket.
         </p>
+
+        <form action="/api/client" method="post">
+            <div class="field">
+                <label class="label">Server URL</label>
+                <div class="control">
+                    <input class="input" type="text" placeholder="wss://server.com:2333/password">
+                </div>
+
+                <div class="field">
+                    <p class="control">
+                        <button class="button">
+                            Start
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </form>
+
     </div>
 </section>
-{% block body %}
+{% endblock %}

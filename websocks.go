@@ -8,11 +8,16 @@ import (
 	"errors"
 	"runtime"
 
+	"os/exec"
+
+	"net/http"
+
+	"github.com/go-macaron/pongo2"
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/config"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
-	"golang.org/x/sys/windows/registry"
+	"gopkg.in/macaron.v1"
 )
 
 func main() {
@@ -151,12 +156,28 @@ func main() {
 					return
 				}
 
-				k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.ALL_ACCESS)
-				if err != nil {
+				err = exec.Command("REG", "ADD", `HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings`, "/v", "AutoConfigURL", "/d", "http://127.0.0.1:10801/pac", "/f").Run()
+				return
+			},
+		},
+		{
+			Name:    "webclient",
+			Aliases: []string{"wc"},
+			Usage:   "test webui client",
+			Action: func(c *cli.Context) (err error) {
+				m := macaron.New()
+				m.Use(pongo2.Pongoer())
+				m.Get("/", func(ctx *macaron.Context) {
+					ctx.HTML(200, "client")
 					return
-				}
+				})
 
-				err = k.SetStringValue("AutoConfigURL", "http://127.0.0.1:10801/pac")
+				//todo pac
+				m.Get("/pac", func(ctx *macaron.Context) {
+					return
+				})
+
+				err = http.ListenAndServe(":10801", m)
 				return
 			},
 		},
