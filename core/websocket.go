@@ -12,6 +12,14 @@ type WebSocket struct {
 	buf  []byte
 }
 
+func NewWebSocket(conn *websocket.Conn) (ws *WebSocket) {
+	ws = &WebSocket{
+		conn: conn,
+	}
+
+	return
+}
+
 func (ws *WebSocket) Read(p []byte) (n int, err error) {
 	if len(ws.buf) == 0 {
 		_, ws.buf, err = ws.conn.ReadMessage()

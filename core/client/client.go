@@ -1,4 +1,4 @@
-package core
+package client
 
 import (
 	"io"
@@ -7,11 +7,17 @@ import (
 
 	"net/url"
 
+	"crypto/tls"
+
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
+	"github.com/lzjluzijie/websocks/core"
 )
 
-type ClientConfig struct {
+//todo built-in logger
+var logger = loggo.GetLogger("client")
+
+type WebSocksClientConfig struct {
 	ListenAddr string
 	ServerURL  string
 
@@ -21,20 +27,54 @@ type ClientConfig struct {
 	Mux bool
 }
 
-type Client struct {
-	*ClientConfig
+type WebSocksClient struct {
 	LogLevel loggo.Level
 
 	ServerURL  *url.URL
 	ListenAddr *net.TCPAddr
 	Dialer     *websocket.Dialer
-	muxWS      *MuxWebSocket
+	muxWS      *core.MuxWebSocket
+
+	//todo enable mux
+	Mux bool
 
 	//statistics
 	CreatedAt time.Time
 }
 
-func (client *Client) Listen() (err error) {
+func NewWebSocksClient(config *WebSocksClientConfig) (client *WebSocksClient) {
+	serverURL, err := url.Parse(config.ServerURL)
+	if err != nil {
+		return
+	}
+
+	laddr, err := net.ResolveTCPAddr("tcp", config.ListenAddr)
+	if err != nil {
+		return
+	}
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: config.InsecureCert,
+		ServerName:         config.SNI,
+	}
+
+	client = &WebSocksClient{
+		ServerURL:  serverURL,
+		ListenAddr: laddr,
+		Dialer: &websocket.Dialer{
+			ReadBufferSize:   4 * 1024,
+			WriteBufferSize:  4 * 1024,
+			HandshakeTimeout: 10 * time.Second,
+			TLSClientConfig:  tlsConfig,
+		},
+
+		CreatedAt: time.Now(),
+	}
+
+	return
+}
+
+func (client *WebSocksClient) Listen() (err error) {
 	logger.SetLogLevel(client.LogLevel)
 
 	listener, err := net.ListenTCP("tcp", client.ListenAddr)
@@ -53,7 +93,7 @@ func (client *Client) Listen() (err error) {
 			return err
 		}
 
-		go client.muxWS.ClientListen()
+		go client.ListenMuxWS(client.muxWS)
 	}
 
 	for {
@@ -69,7 +109,7 @@ func (client *Client) Listen() (err error) {
 	return nil
 }
 
-func (client *Client) handleConn(conn *net.TCPConn) {
+func (client *WebSocksClient) handleConn(conn *net.TCPConn) {
 	defer conn.Close()
 
 	conn.SetLinger(0)
@@ -101,7 +141,7 @@ func (client *Client) handleConn(conn *net.TCPConn) {
 	return
 }
 
-func (client *Client) DialWSConn(host string, conn *net.TCPConn) {
+func (client *WebSocksClient) DialWSConn(host string, conn *net.TCPConn) {
 	wsConn, _, err := client.Dialer.Dial(client.ServerURL.String(), map[string][]string{
 		"WebSocks-Host": {host},
 	})
@@ -114,9 +154,7 @@ func (client *Client) DialWSConn(host string, conn *net.TCPConn) {
 
 	logger.Debugf("dialed ws for %s", host)
 
-	ws := &WebSocket{
-		conn: wsConn,
-	}
+	ws := core.NewWebSocket(wsConn)
 
 	go func() {
 		_, err = io.Copy(ws, conn)

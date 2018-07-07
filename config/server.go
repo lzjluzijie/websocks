@@ -7,7 +7,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/lzjluzijie/websocks/core"
-	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 )
 
@@ -47,10 +46,10 @@ func GenerateServerConfig(c *cli.Context) (err error) {
 	keyPath := c.String("key")
 	reverseProxy := c.String("reverse-proxy")
 
-	if []byte(pattern)[0] != '/' {
-		err = errors.New("pattern does not start with '/'")
-		return
-	}
+	//if []byte(pattern)[0] != '/' {
+	//	err = errors.New("pattern does not start with '/'")
+	//	return
+	//}
 
 	config := &core.ServerConfig{
 		Pattern:      pattern,

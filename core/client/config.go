@@ -1,28 +1,21 @@
-package config
+package client
 
 import (
 	"crypto/tls"
-	"net"
-	"net/url"
-
 	"encoding/json"
 	"io/ioutil"
+	"net"
+	"net/url"
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
 )
 
 //GetClient return client from path
-func GetClientConfig(path string) (client *core.Client, err error) {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return
-	}
-
+func GetClientConfig(data []byte) (client *WebSocksClient, err error) {
 	//read config
-	config := &core.ClientConfig{}
+	config := &WebSocksClientConfig{}
 	err = json.Unmarshal(data, config)
 	if err != nil {
 		return
@@ -44,9 +37,7 @@ func GetClientConfig(path string) (client *core.Client, err error) {
 		ServerName:         config.SNI,
 	}
 
-	client = &core.Client{
-		ClientConfig: config,
-
+	client = &WebSocksClient{
 		ServerURL:  serverURL,
 		ListenAddr: laddr,
 		Dialer: &websocket.Dialer{
@@ -55,6 +46,8 @@ func GetClientConfig(path string) (client *core.Client, err error) {
 			HandshakeTimeout: 10 * time.Second,
 			TLSClientConfig:  tlsConfig,
 		},
+
+		//todo mux
 
 		CreatedAt: time.Now(),
 	}
@@ -65,7 +58,7 @@ func GetClientConfig(path string) (client *core.Client, err error) {
 func GenerateClientConfig(c *cli.Context) (err error) {
 	path := c.String("path")
 
-	config := &core.ClientConfig{
+	config := &WebSocksClientConfig{
 		ListenAddr:   c.String("l"),
 		ServerURL:    c.String("s"),
 		SNI:          c.String("sni"),

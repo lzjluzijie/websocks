@@ -16,6 +16,7 @@ import (
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/config"
 	"github.com/lzjluzijie/websocks/core"
+	"github.com/lzjluzijie/websocks/core/client"
 	"github.com/urfave/cli"
 	"gopkg.in/macaron.v1"
 )
@@ -56,7 +57,12 @@ func main() {
 				path := c.String("c")
 				debug := c.GlobalBool("debug")
 
-				client, err := config.GetClientConfig(path)
+				data, err := ioutil.ReadFile(path)
+				if err != nil {
+					return
+				}
+
+				webSocksClient, err := client.GetClientConfig(data)
 				if err != nil {
 					return
 				}
@@ -65,9 +71,9 @@ func main() {
 				if debug {
 					logLevel = loggo.DEBUG
 				}
-				client.LogLevel = logLevel
+				webSocksClient.LogLevel = logLevel
 
-				err = client.Listen()
+				err = webSocksClient.Listen()
 				if err != nil {
 					return
 				}

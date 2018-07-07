@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/lzjluzijie/websocks/core/client"
 	"github.com/urfave/cli"
 )
 
@@ -43,7 +44,7 @@ var Command = cli.Command{
 					Usage: "InsecureSkipVerify: true",
 				},
 			},
-			Action: GenerateClientConfig,
+			Action: client.GenerateClientConfig,
 		},
 		{
 			Name:    "server",
