@@ -15,6 +15,8 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
+var websocksClient *WebSocksClient
+
 func RunWeb() {
 	//log setup
 	buf := make([]byte, 0)
@@ -28,7 +30,10 @@ func RunWeb() {
 		ctx.HTML(200, "client")
 		return
 	})
-	m.Post("/api/client", Client)
+
+	m.Post("/api/client/start", StartClient)
+	m.Post("/api/client/stop", StopClient)
+
 	m.Get("/api/log", func(ctx *macaron.Context) {
 		ctx.WriteHeader(200)
 		ctx.Write(buffer.Bytes())
@@ -56,7 +61,7 @@ func RunWeb() {
 	return
 }
 
-func Client(ctx *macaron.Context) {
+func StartClient(ctx *macaron.Context) {
 	webSocksClientConfig := &WebSocksClientConfig{}
 	data, err := ioutil.ReadAll(ctx.Req.Body().ReadCloser())
 	if err != nil {
@@ -68,7 +73,7 @@ func Client(ctx *macaron.Context) {
 		ctx.Error(403, err.Error())
 	}
 
-	websocksClient, err := GetClient(webSocksClientConfig)
+	websocksClient, err = GetClient(webSocksClientConfig)
 	if err != nil {
 		ctx.Error(403, err.Error())
 	}
@@ -82,5 +87,12 @@ func Client(ctx *macaron.Context) {
 			log.Error(err.Error())
 		}
 	}()
+	return
+}
+
+func StopClient(ctx *macaron.Context) {
+	websocksClient.Stop()
+	ctx.WriteHeader(200)
+	ctx.Write([]byte("stopped"))
 	return
 }

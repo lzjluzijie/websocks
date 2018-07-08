@@ -35,6 +35,8 @@ type WebSocksClient struct {
 	//todo enable mux
 	Mux bool
 
+	stopC chan int
+
 	//statistics
 	CreatedAt time.Time
 }
@@ -91,17 +93,33 @@ func (client *WebSocksClient) Listen() (err error) {
 		go client.ListenMuxWS(client.muxWS)
 	}
 
+	go func() {
+		client.stopC = make(chan int)
+		<-client.stopC
+		err = listener.Close()
+		if err != nil {
+			log.Errorf(err.Error())
+			return
+		}
+
+		log.Infof("stopped")
+	}()
+
 	for {
 		conn, err := listener.AcceptTCP()
 		if err != nil {
 			log.Debugf(err.Error())
-			continue
+			break
 		}
 
 		go client.handleConn(conn)
 	}
-
 	return nil
+}
+
+func (client *WebSocksClient) Stop() {
+	client.stopC <- 1911
+	return
 }
 
 func (client *WebSocksClient) handleConn(conn *net.TCPConn) {

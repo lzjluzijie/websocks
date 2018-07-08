@@ -5,12 +5,12 @@
 <script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.min.js"
         integrity="sha256-mpnrJ5DpEZZkwkE1ZgkEQQJW/46CSEh/STrZKOB/qoM=" crossorigin="anonymous"></script>
 <script>
-    function Run() {
+    function Start() {
         let ListenAddr = document.getElementById("ListenAddr").value;
         let ServerURL = document.getElementById("ServerURL").value;
         let SNI = document.getElementById("SNI").value;
         let InsecureCert = document.getElementById("InsecureCert").checked;
-        axios.post('/api/client', {
+        axios.post('/api/client/start', {
             ListenAddr,
             ServerURL,
             SNI,
@@ -20,6 +20,11 @@
                 .catch(console.log);
     }
 
+    function Stop() {
+        axios.post('/api/client/stop')
+                .then(console.log)
+                .catch(console.log);
+    }
 
     window.setInterval(getLog, 1000);
 
@@ -79,19 +84,27 @@
                         <label for="InsecureCert">InsecureCert</label>
                     </div>
                 </div>
-
-                <div class="field">
-                    <p class="control">
-                        <button class="button" onclick="Run()">Start</button>
-                    </p>
-                </div>
             </div>
             <div class="column">
                 <div class="field">
-                    <label for="log">Log</label>
-                    <textarea class="textarea" id="log" type="text" readonly>Log...</textarea>
+                    <p class="control">
+                        <button class="button" onclick="Start()">Start</button>
+                    </p>
+                </div>
+                <div class="field">
+                    <p class="control">
+                        <button class="button" onclick="Stop()">Stop</button>
+                    </p>
                 </div>
             </div>
+        </div>
+    </div>
+</section>
+<section>
+    <div class="container">
+        <div class="field">
+            <label for="log">Log</label>
+            <textarea class="textarea" id="log" type="text" readonly cols="80">Log...</textarea>
         </div>
     </div>
 </section>
