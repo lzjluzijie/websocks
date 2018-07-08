@@ -27,17 +27,17 @@ func (client *WebSocksClient) DialMuxConn(host string, conn *net.TCPConn) {
 
 	err := muxConn.DialMessage(host)
 	if err != nil {
-		logger.Errorf(err.Error())
+		log.Errorf(err.Error())
 		err = client.OpenMux()
 		if err != nil {
-			logger.Errorf(err.Error())
+			log.Errorf(err.Error())
 		}
 		return
 	}
 
 	muxConn.MuxWS.PutMuxConn(muxConn)
 
-	logger.Debugf("dialed mux for %s", host)
+	log.Debugf("dialed mux for %s", host)
 
 	muxConn.Run(conn)
 	return
@@ -47,7 +47,7 @@ func (client *WebSocksClient) ListenMuxWS(muxWS *core.MuxWebSocket) {
 	for {
 		m, err := muxWS.ReceiveMessage()
 		if err != nil {
-			logger.Debugf(err.Error())
+			log.Debugf(err.Error())
 			return
 		}
 
@@ -55,7 +55,7 @@ func (client *WebSocksClient) ListenMuxWS(muxWS *core.MuxWebSocket) {
 		conn := muxWS.GetMuxConn(m.ConnID)
 		err = conn.HandleMessage(m)
 		if err != nil {
-			logger.Debugf(err.Error())
+			log.Debugf(err.Error())
 			continue
 		}
 	}

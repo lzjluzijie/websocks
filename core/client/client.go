@@ -10,12 +10,11 @@ import (
 	"crypto/tls"
 
 	"github.com/gorilla/websocket"
-	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
+	"github.com/sirupsen/logrus"
 )
 
-//todo built-in logger
-var logger = loggo.GetLogger("client")
+var log = logrus.New()
 
 type WebSocksClientConfig struct {
 	ListenAddr string
@@ -28,8 +27,6 @@ type WebSocksClientConfig struct {
 }
 
 type WebSocksClient struct {
-	LogLevel loggo.Level
-
 	ServerURL  *url.URL
 	ListenAddr *net.TCPAddr
 	Dialer     *websocket.Dialer
@@ -75,21 +72,19 @@ func NewWebSocksClient(config *WebSocksClientConfig) (client *WebSocksClient) {
 }
 
 func (client *WebSocksClient) Listen() (err error) {
-	logger.SetLogLevel(client.LogLevel)
-
 	listener, err := net.ListenTCP("tcp", client.ListenAddr)
 	if err != nil {
 		return err
 	}
 
-	logger.Infof("Start to listen at %s", client.ListenAddr.String())
+	log.Infof("Start to listen at %s", client.ListenAddr.String())
 
 	defer listener.Close()
 
 	if client.Mux {
 		err := client.OpenMux()
 		if err != nil {
-			logger.Debugf(err.Error())
+			log.Debugf(err.Error())
 			return err
 		}
 
@@ -99,7 +94,7 @@ func (client *WebSocksClient) Listen() (err error) {
 	for {
 		conn, err := listener.AcceptTCP()
 		if err != nil {
-			logger.Debugf(err.Error())
+			log.Debugf(err.Error())
 			continue
 		}
 
@@ -116,19 +111,19 @@ func (client *WebSocksClient) handleConn(conn *net.TCPConn) {
 
 	err := handShake(conn)
 	if err != nil {
-		logger.Debugf(err.Error())
+		log.Debugf(err.Error())
 		return
 	}
 
 	_, host, err := getRequest(conn)
 	if err != nil {
-		logger.Debugf(err.Error())
+		log.Debugf(err.Error())
 		return
 	}
 
 	_, err = conn.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x08, 0x43})
 	if err != nil {
-		logger.Debugf(err.Error())
+		log.Debugf(err.Error())
 		return
 	}
 
@@ -147,19 +142,19 @@ func (client *WebSocksClient) DialWSConn(host string, conn *net.TCPConn) {
 	})
 
 	if err != nil {
-		logger.Errorf(err.Error())
+		log.Errorf(err.Error())
 		return
 	}
 	defer wsConn.Close()
 
-	logger.Debugf("dialed ws for %s", host)
+	log.Debugf("dialed ws for %s", host)
 
 	ws := core.NewWebSocket(wsConn)
 
 	go func() {
 		_, err = io.Copy(ws, conn)
 		if err != nil {
-			logger.Debugf(err.Error())
+			log.Debugf(err.Error())
 			return
 		}
 		return
@@ -167,7 +162,7 @@ func (client *WebSocksClient) DialWSConn(host string, conn *net.TCPConn) {
 
 	_, err = io.Copy(conn, ws)
 	if err != nil {
-		logger.Debugf(err.Error())
+		log.Debugf(err.Error())
 		return
 	}
 	return

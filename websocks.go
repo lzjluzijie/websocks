@@ -10,19 +10,13 @@ import (
 
 	"os/exec"
 
-	"net/http"
-
 	"encoding/json"
-	"fmt"
-	"log"
 
-	"github.com/go-macaron/pongo2"
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/config"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/lzjluzijie/websocks/core/client"
 	"github.com/urfave/cli"
-	"gopkg.in/macaron.v1"
 )
 
 func main() {
@@ -59,7 +53,7 @@ func main() {
 			},
 			Action: func(c *cli.Context) (err error) {
 				path := c.String("c")
-				debug := c.GlobalBool("debug")
+				//debug := c.GlobalBool("debug")
 
 				data, err := ioutil.ReadFile(path)
 				if err != nil {
@@ -77,11 +71,11 @@ func main() {
 					return
 				}
 
-				logLevel := loggo.INFO
-				if debug {
-					logLevel = loggo.DEBUG
-				}
-				webSocksClient.LogLevel = logLevel
+				//logLevel := loggo.INFO
+				//if debug {
+				//	logLevel = loggo.DEBUG
+				//}
+				//webSocksClient.LogLevel = logLevel
 
 				err = webSocksClient.Listen()
 				if err != nil {
@@ -181,49 +175,7 @@ func main() {
 			Aliases: []string{"wc"},
 			Usage:   "test webui client",
 			Action: func(c *cli.Context) (err error) {
-				m := macaron.New()
-				m.Use(pongo2.Pongoer())
-				m.Get("/", func(ctx *macaron.Context) {
-					ctx.HTML(200, "client")
-					return
-				})
-
-				m.Post("/api/client", func(ctx *macaron.Context) {
-					webSocksClientConfig := &client.WebSocksClientConfig{}
-					data, err := ioutil.ReadAll(ctx.Req.Body().ReadCloser())
-					if err != nil {
-						ctx.Error(403, err.Error())
-					}
-
-					err = json.Unmarshal(data, webSocksClientConfig)
-					if err != nil {
-						ctx.Error(403, err.Error())
-					}
-
-					websocksClient, err := client.GetClient(webSocksClientConfig)
-					if err != nil {
-						ctx.Error(403, err.Error())
-					}
-
-					ctx.WriteHeader(200)
-					ctx.Write([]byte(fmt.Sprintf("%v", webSocksClientConfig)))
-
-					go func() {
-						websocksClient.LogLevel = loggo.DEBUG
-						err = websocksClient.Listen()
-						if err != nil {
-							log.Println(err.Error())
-						}
-					}()
-					return
-				})
-
-				//todo pac
-				m.Get("/pac", func(ctx *macaron.Context) {
-					return
-				})
-
-				err = http.ListenAndServe(":10801", m)
+				client.RunWeb()
 				return
 			},
 		},

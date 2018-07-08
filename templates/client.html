@@ -11,13 +11,22 @@
         let SNI = document.getElementById("SNI").value;
         let InsecureCert = document.getElementById("InsecureCert").checked;
         axios.post('/api/client', {
-            ListenAddr: ListenAddr,
-            ServerURL: ServerURL,
-            SNI: SNI,
-            InsecureCert: InsecureCert,
+            ListenAddr,
+            ServerURL,
+            SNI,
+            InsecureCert,
         })
+                .then(console.log)
+                .catch(console.log);
+    }
+
+
+    window.setInterval(getLog, 1000);
+
+    function getLog() {
+        axios.get('/api/log')
                 .then(function (response) {
-                    console.log(response);
+                    document.getElementById("log").value = response.data
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -40,39 +49,49 @@
 
 <section>
     <div class="container">
-        <div class="field">
-            <label class="label">ListenAddr</label>
-            <div class="control">
-                <input class="input" type="text" id="ListenAddr" name="ListenAddr" placeholder=":10801">
-            </div>
-        </div>
+        <div class="columns">
+            <div class="column">
+                <div class="field">
+                    <label class="label" for="ListenAddr">ListenAddr</label>
+                    <div class="control">
+                        <input class="input" type="text" id="ListenAddr" name="ListenAddr" placeholder=":10801">
+                    </div>
+                </div>
 
-        <div class="field">
-            <label class="label">ServerURL</label>
-            <div class="control">
-                <input class="input" type="text" id="ServerURL" name="ServerURL"
-                       placeholder="wss://server.com:2333/password">
-            </div>
-        </div>
+                <div class="field">
+                    <label class="label" for="ServerURL">ServerURL</label>
+                    <div class="control">
+                        <input class="input" type="text" id="ServerURL" name="ServerURL"
+                               placeholder="wss://server.com:2333/password">
+                    </div>
+                </div>
 
-        <div class="field">
-            <label class="label">SNI</label>
-            <div class="control">
-                <input class="input" type="text" id="SNI" name="SNI" placeholder="mirror.centos.org">
-            </div>
-        </div>
+                <div class="field">
+                    <label class="label" for="SNI">SNI</label>
+                    <div class="control">
+                        <input class="input" type="text" id="SNI" name="SNI" placeholder="mirror.centos.org">
+                    </div>
+                </div>
 
-        <div class="field">
-            <div class="control">
-                <input type="checkbox" id="InsecureCert" name="InsecureCert" class="switch" checked="checked">
-                <label for="InsecureCert">InsecureCert</label>
-            </div>
-        </div>
+                <div class="field">
+                    <div class="control">
+                        <input type="checkbox" id="InsecureCert" name="InsecureCert" class="switch" checked="checked">
+                        <label for="InsecureCert">InsecureCert</label>
+                    </div>
+                </div>
 
-        <div class="field">
-            <p class="control">
-                <button class="button" onclick="Run()">Start</button>
-            </p>
+                <div class="field">
+                    <p class="control">
+                        <button class="button" onclick="Run()">Start</button>
+                    </p>
+                </div>
+            </div>
+            <div class="column">
+                <div class="field">
+                    <label for="log">Log</label>
+                    <textarea class="textarea" id="log" type="text" readonly>Log...</textarea>
+                </div>
+            </div>
         </div>
     </div>
 </section>
