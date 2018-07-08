@@ -8,11 +8,15 @@ import (
 	"errors"
 	"runtime"
 
+	"os/exec"
+
+	"encoding/json"
+
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/config"
 	"github.com/lzjluzijie/websocks/core"
+	"github.com/lzjluzijie/websocks/core/client"
 	"github.com/urfave/cli"
-	"golang.org/x/sys/windows/registry"
 )
 
 func main() {
@@ -49,20 +53,31 @@ func main() {
 			},
 			Action: func(c *cli.Context) (err error) {
 				path := c.String("c")
-				debug := c.GlobalBool("debug")
+				//debug := c.GlobalBool("debug")
 
-				client, err := config.GetClientConfig(path)
+				data, err := ioutil.ReadFile(path)
 				if err != nil {
 					return
 				}
 
-				logLevel := loggo.INFO
-				if debug {
-					logLevel = loggo.DEBUG
+				clientConfig := &client.WebSocksClientConfig{}
+				err = json.Unmarshal(data, clientConfig)
+				if err != nil {
+					return
 				}
-				client.LogLevel = logLevel
 
-				err = client.Listen()
+				webSocksClient, err := client.GetClient(clientConfig)
+				if err != nil {
+					return
+				}
+
+				//logLevel := loggo.INFO
+				//if debug {
+				//	logLevel = loggo.DEBUG
+				//}
+				//webSocksClient.LogLevel = logLevel
+
+				err = webSocksClient.Listen()
 				if err != nil {
 					return
 				}
@@ -151,12 +166,16 @@ func main() {
 					return
 				}
 
-				k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.ALL_ACCESS)
-				if err != nil {
-					return
-				}
-
-				err = k.SetStringValue("AutoConfigURL", "http://127.0.0.1:10801/pac")
+				err = exec.Command("REG", "ADD", `HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings`, "/v", "AutoConfigURL", "/d", "http://127.0.0.1:10801/pac", "/f").Run()
+				return
+			},
+		},
+		{
+			Name:    "webclient",
+			Aliases: []string{"wc"},
+			Usage:   "test webui client",
+			Action: func(c *cli.Context) (err error) {
+				client.RunWeb()
 				return
 			},
 		},

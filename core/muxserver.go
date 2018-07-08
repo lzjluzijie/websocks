@@ -80,7 +80,7 @@ func (muxWS *MuxWebSocket) AcceptMuxConn(m *Message) (conn *MuxConn, host string
 
 	conn = &MuxConn{
 		ID:            m.ConnID,
-		muxWS:         muxWS,
+		MuxWS:         muxWS,
 		wait:          make(chan int),
 		sendMessageID: new(uint64),
 	}

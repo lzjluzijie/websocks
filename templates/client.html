@@ -1,0 +1,111 @@
+{% extends "base/base.html" %}
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-switch@2.0.0/dist/css/bulma-switch.min.css"
+      integrity="sha256-jCV/cXwP13w0GNHLgFx6SFgTNAvJPvS5MIhuE30Ng08=" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.min.js"
+        integrity="sha256-mpnrJ5DpEZZkwkE1ZgkEQQJW/46CSEh/STrZKOB/qoM=" crossorigin="anonymous"></script>
+<script>
+    function Start() {
+        let ListenAddr = document.getElementById("ListenAddr").value;
+        let ServerURL = document.getElementById("ServerURL").value;
+        let SNI = document.getElementById("SNI").value;
+        let InsecureCert = document.getElementById("InsecureCert").checked;
+        axios.post('/api/client/start', {
+            ListenAddr,
+            ServerURL,
+            SNI,
+            InsecureCert,
+        })
+                .then(console.log)
+                .catch(console.log);
+    }
+
+    function Stop() {
+        axios.post('/api/client/stop')
+                .then(console.log)
+                .catch(console.log);
+    }
+
+    window.setInterval(getLog, 1000);
+
+    function getLog() {
+        axios.get('/api/log')
+                .then(function (response) {
+                    document.getElementById("log").value = response.data
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+    }
+</script>
+{% endblock %}
+{% block body %}
+<section class="section">
+    <div class="container">
+        <h1 class="title">
+            WebSocks Client
+        </h1>
+        <p class="subtitle">
+            A secure proxy based on websocket.
+        </p>
+
+    </div>
+</section>
+
+<section>
+    <div class="container">
+        <div class="columns">
+            <div class="column">
+                <div class="field">
+                    <label class="label" for="ListenAddr">ListenAddr</label>
+                    <div class="control">
+                        <input class="input" type="text" id="ListenAddr" name="ListenAddr" placeholder=":10801">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label" for="ServerURL">ServerURL</label>
+                    <div class="control">
+                        <input class="input" type="text" id="ServerURL" name="ServerURL"
+                               placeholder="wss://server.com:2333/password">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label" for="SNI">SNI</label>
+                    <div class="control">
+                        <input class="input" type="text" id="SNI" name="SNI" placeholder="mirror.centos.org">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <input type="checkbox" id="InsecureCert" name="InsecureCert" class="switch" checked="checked">
+                        <label for="InsecureCert">InsecureCert</label>
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                <div class="field">
+                    <p class="control">
+                        <button class="button" onclick="Start()">Start</button>
+                    </p>
+                </div>
+                <div class="field">
+                    <p class="control">
+                        <button class="button" onclick="Stop()">Stop</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<section>
+    <div class="container">
+        <div class="field">
+            <label for="log">Log</label>
+            <textarea class="textarea" id="log" type="text" readonly cols="80">Log...</textarea>
+        </div>
+    </div>
+</section>
+{% endblock %}
