@@ -189,20 +189,15 @@ func main() {
 				})
 
 				m.Post("/api/client", func(ctx *macaron.Context) {
-					listenAddr := ctx.Query("ListenAddr")
-					serverURL := ctx.Query("ServerURL")
-					sni := ctx.Query("SNI")
-					insecureCertS := ctx.Query("InsecureCert")
-					insecureCert := false
-					if insecureCertS == "on" {
-						insecureCert = true
+					webSocksClientConfig := &client.WebSocksClientConfig{}
+					data, err := ioutil.ReadAll(ctx.Req.Body().ReadCloser())
+					if err != nil {
+						ctx.Error(403, err.Error())
 					}
 
-					webSocksClientConfig := &client.WebSocksClientConfig{
-						ListenAddr:   listenAddr,
-						ServerURL:    serverURL,
-						SNI:          sni,
-						InsecureCert: insecureCert,
+					err = json.Unmarshal(data, webSocksClientConfig)
+					if err != nil {
+						ctx.Error(403, err.Error())
 					}
 
 					websocksClient, err := client.GetClient(webSocksClientConfig)

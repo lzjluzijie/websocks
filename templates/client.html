@@ -6,14 +6,16 @@
         integrity="sha256-mpnrJ5DpEZZkwkE1ZgkEQQJW/46CSEh/STrZKOB/qoM=" crossorigin="anonymous"></script>
 <script>
     function Run() {
-        let params = new URLSearchParams();
-        params.append("ListenAddr", document.getElementById("ListenAddr").value);
-        params.append("ServerURL", document.getElementById("ServerURL").value);
-        params.append("SNI", document.getElementById("SNI").value);
-        params.append("InsecureCert", document.getElementById("InsecureCert").value);
-        //todo bool
-        console.log(document.getElementById("InsecureCert").checked);
-        axios.post('/api/client', params)
+        let ListenAddr = document.getElementById("ListenAddr").value;
+        let ServerURL = document.getElementById("ServerURL").value;
+        let SNI = document.getElementById("SNI").value;
+        let InsecureCert = document.getElementById("InsecureCert").checked;
+        axios.post('/api/client', {
+            ListenAddr: ListenAddr,
+            ServerURL: ServerURL,
+            SNI: SNI,
+            InsecureCert: InsecureCert,
+        })
                 .then(function (response) {
                     console.log(response);
                 })
