@@ -38,7 +38,9 @@ type WebSocksClient struct {
 	stopC chan int
 
 	//statistics
-	CreatedAt time.Time
+	CreatedAt  time.Time
+	Uploaded   int64
+	Downloaded int64
 }
 
 func NewWebSocksClient(config *WebSocksClientConfig) (client *WebSocksClient) {
@@ -112,7 +114,7 @@ func (client *WebSocksClient) Listen() (err error) {
 			break
 		}
 
-		go client.handleConn(conn)
+		go client.HandleConn(conn)
 	}
 	return nil
 }
@@ -122,39 +124,23 @@ func (client *WebSocksClient) Stop() {
 	return
 }
 
-func (client *WebSocksClient) handleConn(conn *net.TCPConn) {
-	defer conn.Close()
-
-	conn.SetLinger(0)
-
-	err := handShake(conn)
+func (client *WebSocksClient) HandleConn(conn *net.TCPConn) {
+	lc, err := NewLocalConn(conn)
 	if err != nil {
-		log.Debugf(err.Error())
-		return
-	}
-
-	_, host, err := getRequest(conn)
-	if err != nil {
-		log.Debugf(err.Error())
-		return
-	}
-
-	_, err = conn.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x08, 0x43})
-	if err != nil {
-		log.Debugf(err.Error())
+		log.Debug(err.Error())
 		return
 	}
 
 	if client.Mux {
-		client.DialMuxConn(host, conn)
+		client.DialMuxConn(lc.Host, conn)
 	} else {
-		client.DialWSConn(host, conn)
+		client.DialWSConn(lc.Host, lc)
 	}
 
 	return
 }
 
-func (client *WebSocksClient) DialWSConn(host string, conn *net.TCPConn) {
+func (client *WebSocksClient) DialWSConn(host string, conn io.ReadWriter) {
 	wsConn, _, err := client.Dialer.Dial(client.ServerURL.String(), map[string][]string{
 		"WebSocks-Host": {host},
 	})
