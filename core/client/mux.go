@@ -7,7 +7,7 @@ import (
 )
 
 func (client *WebSocksClient) OpenMux() (err error) {
-	wsConn, _, err := client.Dialer.Dial(client.ServerURL.String(), map[string][]string{
+	wsConn, _, err := client.dialer.Dial(client.ServerURL.String(), map[string][]string{
 		"WebSocks-Mux": {"mux"},
 	})
 

@@ -2,8 +2,8 @@ package client
 
 import (
 	"errors"
+	"io"
 	"net"
-	"sync/atomic"
 	"time"
 )
 
@@ -15,8 +15,6 @@ type LocalConn struct {
 	//stats
 	createdAt time.Time
 	closed    bool
-	readed    uint64
-	written   uint64
 }
 
 func NewLocalConn(conn *net.TCPConn) (lc *LocalConn, err error) {
@@ -46,6 +44,26 @@ func NewLocalConn(conn *net.TCPConn) (lc *LocalConn, err error) {
 	return
 }
 
+func (lc *LocalConn) Run(conn io.ReadWriter) {
+	go func() {
+		_, err := io.Copy(lc, conn)
+		if err != nil {
+			log.Debugf(err.Error())
+			return
+		}
+		return
+	}()
+
+	go func() {
+		_, err := io.Copy(conn, lc)
+		if err != nil {
+			log.Debugf(err.Error())
+			return
+		}
+	}()
+	return
+}
+
 func (lc *LocalConn) Read(p []byte) (n int, err error) {
 	if lc.closed {
 		return 0, errors.New("local conn closed")
@@ -55,7 +73,6 @@ func (lc *LocalConn) Read(p []byte) (n int, err error) {
 	if err != nil {
 		lc.closed = true
 	}
-	atomic.AddUint64(&lc.readed, uint64(n))
 	return
 }
 
@@ -68,6 +85,5 @@ func (lc *LocalConn) Write(p []byte) (n int, err error) {
 	if err != nil {
 		lc.closed = true
 	}
-	atomic.AddUint64(&lc.written, uint64(n))
 	return
 }

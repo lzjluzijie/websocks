@@ -33,7 +33,7 @@ func GetClient(config *WebSocksClientConfig) (client *WebSocksClient, err error)
 	client = &WebSocksClient{
 		ServerURL:  serverURL,
 		ListenAddr: laddr,
-		Dialer: &websocket.Dialer{
+		dialer: &websocket.Dialer{
 			ReadBufferSize:   4 * 1024,
 			WriteBufferSize:  4 * 1024,
 			HandshakeTimeout: 10 * time.Second,

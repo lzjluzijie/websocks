@@ -29,8 +29,11 @@ type WebSocksClientConfig struct {
 type WebSocksClient struct {
 	ServerURL  *url.URL
 	ListenAddr *net.TCPAddr
-	Dialer     *websocket.Dialer
-	muxWS      *core.MuxWebSocket
+
+	dialer *websocket.Dialer
+	//connMutex sync.Mutex
+	//wsConns []*core.WebSocket
+	muxWS *core.MuxWebSocket
 
 	//todo enable mux
 	Mux bool
@@ -38,9 +41,13 @@ type WebSocksClient struct {
 	stopC chan int
 
 	//statistics
-	CreatedAt  time.Time
-	Uploaded   int64
-	Downloaded int64
+	CreatedAt     time.Time
+	Downloaded    uint64
+	Uploaded      uint64
+	DownloadSpeed uint64
+	UploadSpeed   uint64
+	downloadedC   chan uint64
+	uploadedC     chan uint64
 }
 
 func NewWebSocksClient(config *WebSocksClientConfig) (client *WebSocksClient) {
@@ -62,16 +69,17 @@ func NewWebSocksClient(config *WebSocksClientConfig) (client *WebSocksClient) {
 	client = &WebSocksClient{
 		ServerURL:  serverURL,
 		ListenAddr: laddr,
-		Dialer: &websocket.Dialer{
+		dialer: &websocket.Dialer{
 			ReadBufferSize:   4 * 1024,
 			WriteBufferSize:  4 * 1024,
 			HandshakeTimeout: 10 * time.Second,
 			TLSClientConfig:  tlsConfig,
 		},
 
-		CreatedAt: time.Now(),
+		CreatedAt:   time.Now(),
+		downloadedC: make(chan uint64, 0),
+		uploadedC:   make(chan uint64, 0),
 	}
-
 	return
 }
 
@@ -83,7 +91,32 @@ func (client *WebSocksClient) Listen() (err error) {
 
 	log.Infof("Start to listen at %s", client.ListenAddr.String())
 
-	defer listener.Close()
+	//status
+	go func() {
+		t := time.NewTicker(time.Second)
+		for range t.C {
+			downloadSpeed := uint64(0)
+			for i := len(client.uploadedC); i > 0; i-- {
+				downloadSpeed += <-client.uploadedC
+			}
+
+			client.DownloadSpeed = downloadSpeed
+			log.Infof("Download speed: %d", downloadSpeed)
+		}
+	}()
+
+	go func() {
+		t := time.NewTicker(time.Second)
+		for range t.C {
+			uploadSpeed := uint64(0)
+			for i := len(client.uploadedC); i > 0; i-- {
+				uploadSpeed += <-client.uploadedC
+			}
+
+			client.UploadSpeed = uploadSpeed
+			log.Infof("Upload speed: %d", uploadSpeed)
+		}
+	}()
 
 	if client.Mux {
 		err := client.OpenMux()
@@ -131,29 +164,30 @@ func (client *WebSocksClient) HandleConn(conn *net.TCPConn) {
 		return
 	}
 
+	//todo mux
 	if client.Mux {
 		client.DialMuxConn(lc.Host, conn)
-	} else {
-		client.DialWSConn(lc.Host, lc)
+		return
 	}
 
-	return
-}
-
-func (client *WebSocksClient) DialWSConn(host string, conn io.ReadWriter) {
-	wsConn, _, err := client.Dialer.Dial(client.ServerURL.String(), map[string][]string{
-		"WebSocks-Host": {host},
-	})
-
+	ws, err := client.DialWebSocket(core.NewHostHeader(lc.Host))
 	if err != nil {
 		log.Errorf(err.Error())
 		return
 	}
-	defer wsConn.Close()
 
-	log.Debugf("dialed ws for %s", host)
+	lc.Run(ws)
+	//client.DialWSConn(lc.Host, lc)
+	return
+}
 
-	ws := core.NewWebSocket(wsConn)
+//todo rewrite
+func (client *WebSocksClient) DialWSConn(host string, conn io.ReadWriter) {
+	ws, err := client.DialWebSocket(core.NewHostHeader(host))
+	if err != nil {
+		log.Errorf(err.Error())
+		return
+	}
 
 	go func() {
 		_, err = io.Copy(ws, conn)
@@ -169,5 +203,20 @@ func (client *WebSocksClient) DialWSConn(host string, conn io.ReadWriter) {
 		log.Debugf(err.Error())
 		return
 	}
+	return
+}
+
+func (client *WebSocksClient) DialWebSocket(header map[string][]string) (ws *core.WebSocket, err error) {
+	wsConn, _, err := client.dialer.Dial(client.ServerURL.String(), header)
+	if err != nil {
+		return
+	}
+
+	ws = core.NewWebSocket(wsConn)
+	ws.AddDownloaded = client.AddDownloaded
+	ws.AddUploaded = client.AddUploaded
+	//client.connMutex.Lock()
+	//client.wsConns = append(client.wsConns, ws)
+	//client.connMutex.Unlock()
 	return
 }

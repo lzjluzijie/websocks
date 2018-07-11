@@ -27,7 +27,6 @@
     }
 
     window.setInterval(getLog, 1000);
-
     function getLog() {
         axios.get('/api/log')
                 .then(function (response) {
