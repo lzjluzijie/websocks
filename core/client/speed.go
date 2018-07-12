@@ -1,13 +1,16 @@
 package client
 
 func (client *WebSocksClient) AddDownloaded(downloaded uint64) {
-	client.downloadedC <- downloaded
-
+	client.downloadMutex.Lock()
+	client.downloadSpeedA += downloaded
+	client.downloadMutex.Unlock()
 	return
 }
 
 func (client *WebSocksClient) AddUploaded(uploaded uint64) {
-	client.uploadedC <- uploaded
+	client.uploadMutex.Lock()
+	client.uploadSpeedA += uploaded
+	client.uploadMutex.Unlock()
 	return
 }
 

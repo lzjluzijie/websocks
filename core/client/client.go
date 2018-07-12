@@ -9,6 +9,8 @@ import (
 
 	"crypto/tls"
 
+	"sync"
+
 	"github.com/gorilla/websocket"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/sirupsen/logrus"
@@ -41,13 +43,16 @@ type WebSocksClient struct {
 	stopC chan int
 
 	//statistics
-	CreatedAt     time.Time
-	Downloaded    uint64
-	Uploaded      uint64
-	DownloadSpeed uint64
-	UploadSpeed   uint64
-	downloadedC   chan uint64
-	uploadedC     chan uint64
+	CreatedAt  time.Time
+	Downloaded uint64
+	Uploaded   uint64
+
+	downloadMutex  sync.Mutex
+	DownloadSpeed  uint64
+	downloadSpeedA uint64
+	uploadMutex    sync.Mutex
+	UploadSpeed    uint64
+	uploadSpeedA   uint64
 }
 
 func NewWebSocksClient(config *WebSocksClientConfig) (client *WebSocksClient) {
@@ -76,9 +81,7 @@ func NewWebSocksClient(config *WebSocksClientConfig) (client *WebSocksClient) {
 			TLSClientConfig:  tlsConfig,
 		},
 
-		CreatedAt:   time.Now(),
-		downloadedC: make(chan uint64, 0),
-		uploadedC:   make(chan uint64, 0),
+		CreatedAt: time.Now(),
 	}
 	return
 }
@@ -95,26 +98,22 @@ func (client *WebSocksClient) Listen() (err error) {
 	go func() {
 		t := time.NewTicker(time.Second)
 		for range t.C {
-			downloadSpeed := uint64(0)
-			for i := len(client.uploadedC); i > 0; i-- {
-				downloadSpeed += <-client.uploadedC
-			}
-
-			client.DownloadSpeed = downloadSpeed
-			log.Infof("Download speed: %d", downloadSpeed)
+			client.downloadMutex.Lock()
+			client.DownloadSpeed = client.downloadSpeedA
+			client.downloadSpeedA = 0
+			client.downloadMutex.Unlock()
+			log.Infof("Download speed: %d", client.DownloadSpeed)
 		}
 	}()
 
 	go func() {
 		t := time.NewTicker(time.Second)
 		for range t.C {
-			uploadSpeed := uint64(0)
-			for i := len(client.uploadedC); i > 0; i-- {
-				uploadSpeed += <-client.uploadedC
-			}
-
-			client.UploadSpeed = uploadSpeed
-			log.Infof("Upload speed: %d", uploadSpeed)
+			client.uploadMutex.Lock()
+			client.UploadSpeed = client.uploadSpeedA
+			client.uploadSpeedA = 0
+			client.uploadMutex.Unlock()
+			log.Infof("Upload speed: %d", client.UploadSpeed)
 		}
 	}()
 

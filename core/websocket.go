@@ -2,7 +2,6 @@ package core
 
 import (
 	"errors"
-	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -18,8 +17,6 @@ type WebSocket struct {
 	//stats
 	createdAt     time.Time
 	closed        bool
-	readed        uint64
-	written       uint64
 	AddDownloaded func(downloaded uint64)
 	AddUploaded   func(uploaded uint64)
 }
@@ -29,12 +26,6 @@ func NewWebSocket(conn *websocket.Conn) (ws *WebSocket) {
 		conn:      conn,
 		createdAt: time.Now(),
 	}
-	return
-}
-
-func (ws *WebSocket) Status() (readed, written uint64) {
-	readed = atomic.LoadUint64(&ws.readed)
-	written = atomic.LoadUint64(&ws.written)
 	return
 }
 
@@ -52,12 +43,10 @@ func (ws *WebSocket) Read(p []byte) (n int, err error) {
 
 	n = copy(p, ws.buf)
 	ws.buf = ws.buf[n:]
-	go func() {
-		atomic.AddUint64(&ws.readed, uint64(n))
-		if ws.AddDownloaded != nil {
-			ws.AddDownloaded(uint64(n))
-		}
-	}()
+
+	if ws.AddDownloaded != nil {
+		go ws.AddDownloaded(uint64(n))
+	}
 	return
 }
 
@@ -72,12 +61,10 @@ func (ws *WebSocket) Write(p []byte) (n int, err error) {
 	}
 
 	n = len(p)
-	go func() {
-		atomic.AddUint64(&ws.written, uint64(n))
-		if ws.AddUploaded != nil {
-			ws.AddUploaded(uint64(n))
-		}
-	}()
+
+	if ws.AddUploaded != nil {
+		go ws.AddUploaded(uint64(n))
+	}
 	return
 }
 
