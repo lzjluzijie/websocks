@@ -1,7 +1,6 @@
 package client
 
 import (
-	"io"
 	"net"
 	"time"
 
@@ -40,19 +39,21 @@ type WebSocksClient struct {
 	//todo enable mux
 	Mux bool
 
+	//control
 	stopC chan int
 
 	//statistics
-	CreatedAt  time.Time
-	Downloaded uint64
-	Uploaded   uint64
+	CreatedAt time.Time
 
-	downloadMutex  sync.Mutex
+	Downloaded     uint64
 	DownloadSpeed  uint64
+	downloadMutex  sync.Mutex
 	downloadSpeedA uint64
-	uploadMutex    sync.Mutex
-	UploadSpeed    uint64
-	uploadSpeedA   uint64
+
+	Uploaded     uint64
+	UploadSpeed  uint64
+	uploadMutex  sync.Mutex
+	uploadSpeedA uint64
 }
 
 func NewWebSocksClient(config *WebSocksClientConfig) (client *WebSocksClient) {
@@ -81,7 +82,11 @@ func NewWebSocksClient(config *WebSocksClientConfig) (client *WebSocksClient) {
 			TLSClientConfig:  tlsConfig,
 		},
 
-		CreatedAt: time.Now(),
+		CreatedAt:     time.Now(),
+		Downloaded:    0,
+		DownloadSpeed: 0,
+		Uploaded:      0,
+		UploadSpeed:   0,
 	}
 	return
 }
@@ -176,32 +181,6 @@ func (client *WebSocksClient) HandleConn(conn *net.TCPConn) {
 	}
 
 	lc.Run(ws)
-	//client.DialWSConn(lc.Host, lc)
-	return
-}
-
-//todo rewrite
-func (client *WebSocksClient) DialWSConn(host string, conn io.ReadWriter) {
-	ws, err := client.DialWebSocket(core.NewHostHeader(host))
-	if err != nil {
-		log.Errorf(err.Error())
-		return
-	}
-
-	go func() {
-		_, err = io.Copy(ws, conn)
-		if err != nil {
-			log.Debugf(err.Error())
-			return
-		}
-		return
-	}()
-
-	_, err = io.Copy(conn, ws)
-	if err != nil {
-		log.Debugf(err.Error())
-		return
-	}
 	return
 }
 

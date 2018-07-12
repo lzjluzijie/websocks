@@ -15,9 +15,7 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-var websocksClient *WebSocksClient
-
-func RunWeb() {
+func (app *WebSocksClientApp) RunWeb() {
 	//log setup
 	buf := make([]byte, 0)
 	buffer := bytes.NewBuffer(buf)
@@ -31,17 +29,28 @@ func RunWeb() {
 		return
 	})
 
-	m.Post("/api/client/start", StartClient)
-	m.Post("/api/client/stop", StopClient)
-
-	m.Get("/api/log", func(ctx *macaron.Context) {
-		ctx.WriteHeader(200)
-		ctx.Write(buffer.Bytes())
-		return
-	})
 	//todo pac
 	m.Get("/pac", func(ctx *macaron.Context) {
 		return
+	})
+
+	//api v0
+	m.Group("/api/v0/client", func() {
+		m.Get("/log", func(ctx *macaron.Context) {
+			ctx.WriteHeader(200)
+			ctx.Write(buffer.Bytes())
+			return
+		})
+		m.Get("/stats", func(ctx *macaron.Context) {
+			stats := app.GetStatus()
+			if stats == nil {
+				ctx.Error(403, "websocks client is not running")
+				return
+			}
+			ctx.JSON(200, stats)
+		})
+		m.Post("/start", app.StartClient)
+		m.Post("/stop", app.StopClient)
 	})
 
 	go func() {
@@ -61,7 +70,7 @@ func RunWeb() {
 	return
 }
 
-func StartClient(ctx *macaron.Context) {
+func (app *WebSocksClientApp) StartClient(ctx *macaron.Context) {
 	webSocksClientConfig := &WebSocksClientConfig{}
 	data, err := ioutil.ReadAll(ctx.Req.Body().ReadCloser())
 	if err != nil {
@@ -73,10 +82,13 @@ func StartClient(ctx *macaron.Context) {
 		ctx.Error(403, err.Error())
 	}
 
-	websocksClient, err = GetClient(webSocksClientConfig)
+	websocksClient, err := GetClient(webSocksClientConfig)
 	if err != nil {
 		ctx.Error(403, err.Error())
 	}
+
+	app.WebSocksClient = websocksClient
+	app.running = true
 
 	ctx.WriteHeader(200)
 	ctx.Write([]byte(fmt.Sprintf("%v", webSocksClientConfig)))
@@ -90,8 +102,8 @@ func StartClient(ctx *macaron.Context) {
 	return
 }
 
-func StopClient(ctx *macaron.Context) {
-	websocksClient.Stop()
+func (app *WebSocksClientApp) StopClient(ctx *macaron.Context) {
+	app.WebSocksClient.Stop()
 	ctx.WriteHeader(200)
 	ctx.Write([]byte("stopped"))
 	return

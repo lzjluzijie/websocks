@@ -175,7 +175,8 @@ func main() {
 			Aliases: []string{"wc"},
 			Usage:   "test webui client",
 			Action: func(c *cli.Context) (err error) {
-				client.RunWeb()
+				app := client.WebSocksClientApp{}
+				app.RunWeb()
 				return
 			},
 		},
