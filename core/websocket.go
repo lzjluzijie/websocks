@@ -52,10 +52,12 @@ func (ws *WebSocket) Read(p []byte) (n int, err error) {
 
 	n = copy(p, ws.buf)
 	ws.buf = ws.buf[n:]
-	atomic.AddUint64(&ws.readed, uint64(n))
-	if ws.AddDownloaded != nil {
-		ws.AddDownloaded(uint64(n))
-	}
+	go func() {
+		atomic.AddUint64(&ws.readed, uint64(n))
+		if ws.AddDownloaded != nil {
+			ws.AddDownloaded(uint64(n))
+		}
+	}()
 	return
 }
 
@@ -70,10 +72,12 @@ func (ws *WebSocket) Write(p []byte) (n int, err error) {
 	}
 
 	n = len(p)
-	atomic.AddUint64(&ws.written, uint64(n))
-	if ws.AddUploaded != nil {
-		ws.AddUploaded(uint64(n))
-	}
+	go func() {
+		atomic.AddUint64(&ws.written, uint64(n))
+		if ws.AddUploaded != nil {
+			ws.AddUploaded(uint64(n))
+		}
+	}()
 	return
 }
 

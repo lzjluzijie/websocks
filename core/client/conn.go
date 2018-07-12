@@ -5,6 +5,8 @@ import (
 	"io"
 	"net"
 	"time"
+
+	"github.com/lzjluzijie/websocks/core"
 )
 
 type LocalConn struct {
@@ -31,7 +33,6 @@ func NewLocalConn(conn *net.TCPConn) (lc *LocalConn, err error) {
 
 	_, err = conn.Write([]byte{0x05, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x08, 0x43})
 	if err != nil {
-		log.Debugf(err.Error())
 		return
 	}
 
@@ -44,9 +45,9 @@ func NewLocalConn(conn *net.TCPConn) (lc *LocalConn, err error) {
 	return
 }
 
-func (lc *LocalConn) Run(conn io.ReadWriter) {
+func (lc *LocalConn) Run(ws *core.WebSocket) {
 	go func() {
-		_, err := io.Copy(lc, conn)
+		_, err := io.Copy(lc, ws)
 		if err != nil {
 			log.Debugf(err.Error())
 			return
@@ -55,7 +56,7 @@ func (lc *LocalConn) Run(conn io.ReadWriter) {
 	}()
 
 	go func() {
-		_, err := io.Copy(conn, lc)
+		_, err := io.Copy(ws, lc)
 		if err != nil {
 			log.Debugf(err.Error())
 			return
