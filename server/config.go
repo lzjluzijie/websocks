@@ -1,4 +1,4 @@
-package config
+package server
 
 import (
 	"encoding/json"
@@ -6,26 +6,24 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
 )
 
-//GenerateServerConfig create a client config from path
-func GetServerConfig(path string) (server *core.Server, err error) {
+func GetServer(path string) (server *WebSocksServer, err error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return
 	}
 
 	//read config
-	config := &core.ServerConfig{}
+	config := &Config{}
 	err = json.Unmarshal(data, config)
 	if err != nil {
 		return
 	}
 
-	server = &core.Server{
-		ServerConfig: config,
+	server = &WebSocksServer{
+		Config: config,
 		Upgrader: &websocket.Upgrader{
 			ReadBufferSize:   4 * 1024,
 			WriteBufferSize:  4 * 1024,
@@ -51,7 +49,7 @@ func GenerateServerConfig(c *cli.Context) (err error) {
 	//	return
 	//}
 
-	config := &core.ServerConfig{
+	config := &Config{
 		Pattern:      pattern,
 		ListenAddr:   listenAddr,
 		TLS:          tls,

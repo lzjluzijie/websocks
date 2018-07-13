@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/lzjluzijie/websocks/core"
 	"github.com/urfave/cli"
 )
 
@@ -43,6 +44,7 @@ func GetClient(config *WebSocksClientConfig) (client *WebSocksClient, err error)
 		//todo mux
 
 		CreatedAt: time.Now(),
+		Stats:     core.NewStats(),
 	}
 	return
 }

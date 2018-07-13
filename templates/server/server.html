@@ -6,46 +6,30 @@
         integrity="sha256-mpnrJ5DpEZZkwkE1ZgkEQQJW/46CSEh/STrZKOB/qoM=" crossorigin="anonymous"></script>
 <script>
     function Start() {
-        let ListenAddr = document.getElementById("ListenAddr").value;
-        let ServerURL = document.getElementById("ServerURL").value;
-        let SNI = document.getElementById("SNI").value;
-        let InsecureCert = document.getElementById("InsecureCert").checked;
-        axios.post('/api/v0/client/start', {
-            ListenAddr,
-            ServerURL,
-            SNI,
-            InsecureCert,
+        let Pattern = document.getElementById("Pattern").value;
+        axios.post('/api/v0/server/start', {
+            Pattern,
         })
                 .then(console.log)
                 .catch(console.log);
 
+        //stats
         window.setInterval(getStats, 1000);
-        window.setInterval(getLog, 1000);
     }
 
     function Stop() {
-        axios.post('/api/v0/client/stop')
+        axios.post('/api/v0/server/stop')
                 .then(console.log)
                 .catch(console.log);
     }
 
     function getStats() {
-        axios.get('/api/v0/client/stats')
+        axios.get('/api/v0/server/stats')
                 .then(function (response) {
                     document.getElementById("Downloaded").innerHTML = response.data.Downloaded;
                     document.getElementById("DownloadSpeed").innerHTML = response.data.DownloadSpeed;
                     document.getElementById("Uploaded").innerHTML = response.data.Uploaded;
                     document.getElementById("UploadSpeed").innerHTML = response.data.UploadSpeed;
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
-    }
-
-    function getLog() {
-        axios.get('/api/v0/client/log')
-                .then(function (response) {
-                    document.getElementById("log").value = response.data
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -57,7 +41,7 @@
 <section class="section">
     <div class="container">
         <h1 class="title">
-            WebSocks Client
+            WebSocks Server
         </h1>
         <p class="subtitle">
             A secure proxy based on WebSocket.
@@ -72,31 +56,10 @@
             <div class="column">
                 <div class="box">
                     <div class="field">
-                        <label class="label" for="ListenAddr">ListenAddr</label>
+                        <label class="label" for="Pattern">Pattern</label>
                         <div class="control">
-                            <input class="input" type="text" id="ListenAddr" name="ListenAddr" placeholder=":10801">
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label class="label" for="ServerURL">ServerURL</label>
-                        <div class="control">
-                            <input class="input" type="text" id="ServerURL" name="ServerURL"
-                                   placeholder="wss://server.com:2333/password">
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label class="label" for="SNI">SNI</label>
-                        <div class="control">
-                            <input class="input" type="text" id="SNI" name="SNI" placeholder="mirror.centos.org">
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <div class="control">
-                            <input type="checkbox" id="InsecureCert" name="InsecureCert" class="switch"
-                                   checked="checked">
-                            <label for="InsecureCert">InsecureCert</label>
+                            <input class="input" type="text" id="Pattern" name="Pattern"
+                                   placeholder="/websocks">
                         </div>
                     </div>
                 </div>
@@ -120,7 +83,7 @@
 <section>
     <div class="container">
         <div class="box">
-            <p class="subtitle">Client Stats</p>
+            <p class="subtitle">Server Stats</p>
             <div class="content">
                 <table>
                     <thead>
@@ -157,14 +120,6 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-</section>
-<section>
-    <div class="container">
-        <div class="box">
-            <p class="subtitle">Logs</p>
-            <textarea class="textarea" id="log" type="text" readonly rows="10">Log...</textarea>
         </div>
     </div>
 </section>

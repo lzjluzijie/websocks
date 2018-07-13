@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/lzjluzijie/websocks/core/client"
+	"github.com/lzjluzijie/websocks/client"
 	"github.com/urfave/cli"
 )
 
@@ -86,7 +86,6 @@ var Command = cli.Command{
 					Usage: "reverse proxy url, leave blank to disable",
 				},
 			},
-			Action: GenerateServerConfig,
 		},
 	},
 }

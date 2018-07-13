@@ -13,9 +13,10 @@ import (
 	"encoding/json"
 
 	"github.com/juju/loggo"
+	"github.com/lzjluzijie/websocks/client"
 	"github.com/lzjluzijie/websocks/config"
 	"github.com/lzjluzijie/websocks/core"
-	"github.com/lzjluzijie/websocks/core/client"
+	"github.com/lzjluzijie/websocks/server"
 	"github.com/urfave/cli"
 )
 
@@ -99,7 +100,7 @@ func main() {
 				path := c.String("c")
 				debug := c.GlobalBool("debug")
 
-				server, err := config.GetServerConfig(path)
+				webSocksServer, err := server.GetServer(path)
 				if err != nil {
 					return
 				}
@@ -108,9 +109,9 @@ func main() {
 				if debug {
 					logLevel = loggo.DEBUG
 				}
-				server.LogLevel = logLevel
+				webSocksServer.LogLevel = logLevel
 
-				err = server.Listen()
+				err = webSocksServer.Listen()
 				if err != nil {
 					return
 				}
@@ -171,12 +172,24 @@ func main() {
 			},
 		},
 		{
-			Name:    "webclient",
-			Aliases: []string{"wc"},
-			Usage:   "test webui client",
+			Name:    "app client",
+			Aliases: []string{"appc"},
+			Usage:   "test web ui client",
 			Action: func(c *cli.Context) (err error) {
 				app := client.WebSocksClientApp{}
 				app.RunWeb()
+				return
+			},
+		},
+		{
+			Name:    "app server",
+			Aliases: []string{"apps"},
+			Usage:   "test web ui client",
+			Action: func(c *cli.Context) (err error) {
+				app := server.App{
+					WebListenAddr: ":23333",
+				}
+				err = app.Run()
 				return
 			},
 		},

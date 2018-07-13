@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -42,12 +41,11 @@ func (app *WebSocksClientApp) RunWeb() {
 			return
 		})
 		m.Get("/stats", func(ctx *macaron.Context) {
-			stats := app.GetStatus()
-			if stats == nil {
+			if app.WebSocksClient == nil {
 				ctx.Error(403, "websocks client is not running")
 				return
 			}
-			ctx.JSON(200, stats)
+			ctx.JSON(200, app.WebSocksClient.Stats)
 		})
 		m.Post("/start", app.StartClient)
 		m.Post("/stop", app.StopClient)
@@ -89,9 +87,6 @@ func (app *WebSocksClientApp) StartClient(ctx *macaron.Context) {
 
 	app.WebSocksClient = websocksClient
 	app.running = true
-
-	ctx.WriteHeader(200)
-	ctx.Write([]byte(fmt.Sprintf("%v", webSocksClientConfig)))
 
 	go func() {
 		err = websocksClient.Listen()

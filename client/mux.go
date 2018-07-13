@@ -15,7 +15,7 @@ func (client *WebSocksClient) OpenMux() (err error) {
 		return
 	}
 
-	ws := core.NewWebSocket(wsConn)
+	ws := core.NewWebSocket(wsConn, client.Stats)
 
 	muxWS := core.NewMuxWebSocket(ws)
 	client.muxWS = muxWS
