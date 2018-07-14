@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net/http"
 
+	"github.com/gorilla/sessions"
 	"gopkg.in/macaron.v1"
 )
 
@@ -16,8 +17,9 @@ type App struct {
 	CertPath      string
 	KeyPath       string
 
-	s http.Server
-	m *macaron.Macaron
+	s     http.Server
+	store sessions.Store
+	m     *macaron.Macaron
 }
 
 func (app *App) Run() (err error) {

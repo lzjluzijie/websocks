@@ -11,14 +11,28 @@ import (
 	"os/exec"
 
 	"github.com/go-macaron/pongo2"
+	"github.com/gorilla/sessions"
 	"gopkg.in/macaron.v1"
 )
 
 func (app *App) Macaron() (m *macaron.Macaron) {
+	app.store = sessions.NewCookieStore([]byte("just a test"))
+
 	m = macaron.New()
 	m.Use(pongo2.Pongoer())
+
 	m.Get("/", func(ctx *macaron.Context) {
+		session, _ := app.store.Get(ctx.Req.Request, "cookie")
+		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+			ctx.Error(403, "not halulu")
+			return
+		}
+
 		ctx.HTML(200, "server/server")
+	})
+
+	m.Get("/login", func(ctx *macaron.Context) {
+		ctx.HTML(200, "server/login")
 	})
 
 	//api v0
@@ -34,6 +48,8 @@ func (app *App) Macaron() (m *macaron.Macaron) {
 		})
 		m.Post("/start", app.StartServer)
 		//m.Post("/stop", app.StopServer)
+
+		m.Post("/login", app.Login)
 	})
 
 	go func() {
