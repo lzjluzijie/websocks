@@ -85,7 +85,7 @@ func main() {
 						return
 					}
 
-					err = wc.Listen()
+					err = wc.Run()
 					return
 				},
 			},
@@ -119,7 +119,7 @@ func main() {
 						Usage: "tls key path",
 					},
 					cli.StringFlag{
-						Name:  "proxy",
+						Name:  "reverse-proxy",
 						Value: "",
 						Usage: "reverse proxy url, leave blank to disable",
 					},
@@ -131,7 +131,7 @@ func main() {
 					tls := c.Bool("tls")
 					certPath := c.String("cert")
 					keyPath := c.String("key")
-					//proxy := c.String("proxy")
+					reverseProxy := c.String("reverse-proxy")
 
 					if debug {
 						logger.SetLogLevel(loggo.DEBUG)
@@ -140,16 +140,17 @@ func main() {
 					logger.Infof("Log level %s", logger.LogLevel().String())
 
 					config := server.Config{
-						Pattern:    pattern,
-						ListenAddr: listenAddr,
-						TLS:        tls,
-						CertPath:   certPath,
-						KeyPath:    keyPath,
+						Pattern:      pattern,
+						ListenAddr:   listenAddr,
+						TLS:          tls,
+						CertPath:     certPath,
+						KeyPath:      keyPath,
+						ReverseProxy: reverseProxy,
 					}
 
 					websocksServer := config.GetServer()
 					logger.Infof("Listening at %s", listenAddr)
-					err = websocksServer.Listen()
+					err = websocksServer.Run()
 					if err != nil {
 						return
 					}

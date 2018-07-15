@@ -32,7 +32,7 @@ type WebSocksClient struct {
 	Stats     *core.Stats
 }
 
-func (client *WebSocksClient) Listen() (err error) {
+func (client *WebSocksClient) Run() (err error) {
 	listener, err := net.ListenTCP("tcp", client.ListenAddr)
 	if err != nil {
 		return err

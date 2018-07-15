@@ -7,6 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"net/http/httputil"
+	"net/url"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
@@ -26,22 +29,6 @@ type WebSocksServer struct {
 
 	CreatedAt time.Time
 	Stats     *core.Stats
-}
-
-func (config *Config) GetServer() (server *WebSocksServer) {
-	server = &WebSocksServer{
-		Config: config,
-		Upgrader: &websocket.Upgrader{
-			ReadBufferSize:   4 * 1024,
-			WriteBufferSize:  4 * 1024,
-			HandshakeTimeout: 10 * time.Second,
-		},
-		CreatedAt: time.Now(),
-		Stats:     core.NewStats(),
-	}
-
-	logger.SetLogLevel(loggo.DEBUG)
-	return
 }
 
 func (server *WebSocksServer) HandleWebSocket(c *gin.Context) {
@@ -97,9 +84,20 @@ func (server *WebSocksServer) DialRemote(host string) (conn net.Conn, err error)
 	return
 }
 
-func (server *WebSocksServer) Listen() (err error) {
+func (server *WebSocksServer) Run() (err error) {
 	r := gin.Default()
 	r.GET(server.Pattern, server.HandleWebSocket)
+
+	if server.ReverseProxy != "" {
+		remote, err := url.Parse(server.ReverseProxy)
+		if err != nil {
+			panic(err)
+		}
+		proxy := httputil.NewSingleHostReverseProxy(remote)
+		r.NoRoute(func(c *gin.Context) {
+			proxy.ServeHTTP(c.Writer, c.Request)
+		})
+	}
 
 	s := http.Server{
 		Addr:    server.ListenAddr,

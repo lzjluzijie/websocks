@@ -89,7 +89,7 @@ func (app *WebSocksClientApp) StartClient(ctx *macaron.Context) {
 	app.running = true
 
 	go func() {
-		err = websocksClient.Listen()
+		err = websocksClient.Run()
 		if err != nil {
 			log.Error(err.Error())
 		}
