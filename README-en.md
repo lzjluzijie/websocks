@@ -22,34 +22,30 @@ The disadvantage is that I have just started development, there is no GUI client
 #### Server
 ```
 ./websocks cert
-./websocks config server -l :2333 -p /password --reverse-proxy https://www.centos.org/ --tls
-./websocks server
+./websocks server -l :443 -p websocks --reverse-proxy http://mirror.centos.org --tls
 ```
 
-#### Local
+#### Client
 ```
-./websocks config client -l :1080 -s wss://server.com:2333/password -n www.centos.com --insecure
-./websocks client
+./websocks client -l :1080 -s wss://websocks.org:443/websocks -n mirror.centos.com --insecure
 ```
 
 ### Caddy TLS
 
 #### Server
 ```
-./websocks config server -l :2333 -p /password
-./websocks server
+./websocks server -l :2333 -p /websocks
 ```
 
-#### Local
+#### Client
 ```
-./websocks config client -l :1080 -s wss://server.com/password
-./websocks client
+./websocks client -l :1080 -s wss://websocks.org/websocks
 ```
 
 #### Caddyfile
 ```
-https://server.com {
-  proxy /password localhost:2333 {
+https://websocks.org {
+  proxy /websocks localhost:2333 {
     websocket
   }
 }
