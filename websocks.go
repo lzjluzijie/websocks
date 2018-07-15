@@ -102,7 +102,7 @@ func main() {
 					cli.StringFlag{
 						Name:  "p",
 						Value: "/websocks",
-						Usage: "server.com/pattern, like password, start with '/'",
+						Usage: "websocks.org/pattern",
 					},
 					cli.BoolFlag{
 						Name:  "tls",
@@ -138,6 +138,10 @@ func main() {
 					}
 
 					logger.Infof("Log level %s", logger.LogLevel().String())
+
+					if pattern[0] != '/' {
+						pattern = "/" + pattern
+					}
 
 					config := server.Config{
 						Pattern:      pattern,

@@ -12,9 +12,9 @@ import (
 
 	"crypto/tls"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
+	"github.com/julienschmidt/httprouter"
 	"github.com/lzjluzijie/websocks/core"
 )
 
@@ -33,9 +33,7 @@ type WebSocksServer struct {
 	Stats     *core.Stats
 }
 
-func (server *WebSocksServer) HandleWebSocket(c *gin.Context) {
-	w := c.Writer
-	r := c.Request
+func (server *WebSocksServer) HandleWebSocket(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	wsConn, err := server.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Debugf(err.Error())
@@ -87,7 +85,7 @@ func (server *WebSocksServer) DialRemote(host string) (conn net.Conn, err error)
 }
 
 func (server *WebSocksServer) Run() (err error) {
-	r := gin.Default()
+	r := httprouter.New()
 	r.GET(server.Pattern, server.HandleWebSocket)
 
 	if server.ReverseProxy != "" {
@@ -96,9 +94,7 @@ func (server *WebSocksServer) Run() (err error) {
 			panic(err)
 		}
 		proxy := httputil.NewSingleHostReverseProxy(remote)
-		r.NoRoute(func(c *gin.Context) {
-			proxy.ServeHTTP(c.Writer, c.Request)
-		})
+		r.NotFound = proxy
 	}
 
 	s := http.Server{
