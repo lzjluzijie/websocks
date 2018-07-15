@@ -22,7 +22,7 @@ func main() {
 
 	app := cli.App{
 		Name:        "WebSocks",
-		Version:     "0.11.1",
+		Version:     "0.12.1",
 		Usage:       "A secure proxy based on WebSocket. Click to start web client.",
 		Description: "websocks.org",
 		Author:      "Halulu",
