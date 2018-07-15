@@ -1,10 +1,6 @@
 package server
 
 import (
-	"net/http"
-	"net/http/httputil"
-	"net/url"
-
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -21,13 +17,20 @@ func (app *App) Macaron() (m *macaron.Macaron) {
 	m = macaron.New()
 	m.Use(pongo2.Pongoer())
 
-	m.Get("/", func(ctx *macaron.Context) {
+	//login check
+	m.Use(func(ctx *macaron.Context) {
+		if ctx.Req.RequestURI != "" {
+
+		}
+
 		session, _ := app.store.Get(ctx.Req.Request, "cookie")
 		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
 			ctx.Error(403, "not halulu")
 			return
 		}
+	})
 
+	m.Get("/", func(ctx *macaron.Context) {
 		ctx.HTML(200, "server/server")
 	})
 
@@ -76,32 +79,8 @@ func (app *App) StartServer(ctx *macaron.Context) {
 	}
 	ctx.JSON(200, config)
 
-	webSocksServer := config.NewWebSocksServer()
+	webSocksServer := config.GetServer()
 	app.WebSocksServer = webSocksServer
 	app.m.Get(webSocksServer.Pattern, webSocksServer.HandleWebSocket)
-	return
-}
-
-func (server *WebSocksServer) getMacaron() (m *macaron.Macaron) {
-	m = macaron.New()
-	m.Use(pongo2.Pongoer())
-	m.Group(server.Pattern, func() {
-		m.Get("/", server.HandleWebSocket)
-	})
-
-	if server.ReverseProxy != "" {
-		m.NotFound(func(w http.ResponseWriter, r *http.Request) {
-			remote, err := url.Parse(server.ReverseProxy)
-			if err != nil {
-				panic(err)
-			}
-			proxy := httputil.NewSingleHostReverseProxy(remote)
-			proxy.ServeHTTP(w, r)
-		})
-	} else {
-		m.Get("/", func(ctx *macaron.Context) {
-			ctx.HTML(200, "home")
-		})
-	}
 	return
 }

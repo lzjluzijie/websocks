@@ -6,24 +6,12 @@ import (
 
 	"net/url"
 
-	"crypto/tls"
-
 	"github.com/gorilla/websocket"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/sirupsen/logrus"
 )
 
 var log = logrus.New()
-
-type WebSocksClientConfig struct {
-	ListenAddr string
-	ServerURL  string
-
-	SNI          string
-	InsecureCert bool
-
-	Mux bool
-}
 
 type WebSocksClient struct {
 	ServerURL  *url.URL
@@ -42,38 +30,6 @@ type WebSocksClient struct {
 
 	CreatedAt time.Time
 	Stats     *core.Stats
-}
-
-func NewWebSocksClient(config *WebSocksClientConfig) (client *WebSocksClient) {
-	serverURL, err := url.Parse(config.ServerURL)
-	if err != nil {
-		return
-	}
-
-	laddr, err := net.ResolveTCPAddr("tcp", config.ListenAddr)
-	if err != nil {
-		return
-	}
-
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: config.InsecureCert,
-		ServerName:         config.SNI,
-	}
-
-	client = &WebSocksClient{
-		ServerURL:  serverURL,
-		ListenAddr: laddr,
-		dialer: &websocket.Dialer{
-			ReadBufferSize:   4 * 1024,
-			WriteBufferSize:  4 * 1024,
-			HandshakeTimeout: 10 * time.Second,
-			TLSClientConfig:  tlsConfig,
-		},
-
-		CreatedAt: time.Now(),
-		Stats:     core.NewStats(),
-	}
-	return
 }
 
 func (client *WebSocksClient) Listen() (err error) {

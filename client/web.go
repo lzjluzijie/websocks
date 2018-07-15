@@ -69,18 +69,18 @@ func (app *WebSocksClientApp) RunWeb() {
 }
 
 func (app *WebSocksClientApp) StartClient(ctx *macaron.Context) {
-	webSocksClientConfig := &WebSocksClientConfig{}
+	config := &Config{}
 	data, err := ioutil.ReadAll(ctx.Req.Body().ReadCloser())
 	if err != nil {
 		ctx.Error(403, err.Error())
 	}
 
-	err = json.Unmarshal(data, webSocksClientConfig)
+	err = json.Unmarshal(data, config)
 	if err != nil {
 		ctx.Error(403, err.Error())
 	}
 
-	websocksClient, err := GetClient(webSocksClientConfig)
+	websocksClient, err := config.GetClient()
 	if err != nil {
 		ctx.Error(403, err.Error())
 	}

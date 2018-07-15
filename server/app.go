@@ -12,10 +12,10 @@ type App struct {
 	//todo multiple servers
 	*WebSocksServer
 
-	WebListenAddr string
-	TLS           bool
-	CertPath      string
-	KeyPath       string
+	ListenAddr string
+	TLS        bool
+	CertPath   string
+	KeyPath    string
 
 	s     http.Server
 	store sessions.Store
@@ -26,7 +26,7 @@ func (app *App) Run() (err error) {
 	m := app.Macaron()
 	app.m = m
 	app.s = http.Server{
-		Addr:    app.WebListenAddr,
+		Addr:    app.ListenAddr,
 		Handler: m,
 	}
 

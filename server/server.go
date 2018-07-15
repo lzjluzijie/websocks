@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
@@ -14,15 +15,6 @@ import (
 
 //todo
 var logger = loggo.GetLogger("server")
-
-type Config struct {
-	ListenAddr   string
-	Pattern      string
-	TLS          bool
-	CertPath     string
-	KeyPath      string
-	ReverseProxy string
-}
 
 type WebSocksServer struct {
 	*Config
@@ -36,7 +28,7 @@ type WebSocksServer struct {
 	Stats     *core.Stats
 }
 
-func (config *Config) NewWebSocksServer() (server *WebSocksServer) {
+func (config *Config) GetServer() (server *WebSocksServer) {
 	server = &WebSocksServer{
 		Config: config,
 		Upgrader: &websocket.Upgrader{
@@ -47,18 +39,22 @@ func (config *Config) NewWebSocksServer() (server *WebSocksServer) {
 		CreatedAt: time.Now(),
 		Stats:     core.NewStats(),
 	}
+
+	logger.SetLogLevel(loggo.DEBUG)
 	return
 }
 
-func (server *WebSocksServer) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
-	c, err := server.Upgrader.Upgrade(w, r, nil)
+func (server *WebSocksServer) HandleWebSocket(c *gin.Context) {
+	w := c.Writer
+	r := c.Request
+	wsConn, err := server.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Debugf(err.Error())
 		return
 	}
-	defer c.Close()
+	defer wsConn.Close()
 
-	ws := core.NewWebSocket(c, server.Stats)
+	ws := core.NewWebSocket(wsConn, server.Stats)
 	//todo conns
 
 	////mux
@@ -102,11 +98,12 @@ func (server *WebSocksServer) DialRemote(host string) (conn net.Conn, err error)
 }
 
 func (server *WebSocksServer) Listen() (err error) {
-	logger.SetLogLevel(server.LogLevel)
+	r := gin.Default()
+	r.GET(server.Pattern, server.HandleWebSocket)
 
 	s := http.Server{
 		Addr:    server.ListenAddr,
-		Handler: server.getMacaron(),
+		Handler: r,
 	}
 
 	logger.Infof("Start to listen at %s", server.ListenAddr)
@@ -117,9 +114,6 @@ func (server *WebSocksServer) Listen() (err error) {
 			return err
 		}
 		return
-	} else {
-
 	}
-
 	return
 }
