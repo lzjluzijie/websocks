@@ -10,6 +10,8 @@ import (
 	"net/http/httputil"
 	"net/url"
 
+	"crypto/tls"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/juju/loggo"
@@ -112,6 +114,22 @@ func (server *WebSocksServer) Run() (err error) {
 			return err
 		}
 		return
+	}
+
+	s.TLSConfig = &tls.Config{
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+	}
+
+	err = s.ListenAndServeTLS(server.Config.CertPath, server.Config.KeyPath)
+	if err != nil {
+		return err
 	}
 	return
 }

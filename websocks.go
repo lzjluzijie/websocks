@@ -90,9 +90,9 @@ func main() {
 				},
 			},
 			{
-				Name: "server",
-				//Aliases: []string{"s"},
-				Usage: "start websocks server",
+				Name:    "server",
+				Aliases: []string{"s"},
+				Usage:   "start websocks server",
 				Flags: []cli.Flag{
 					cli.StringFlag{
 						Name:  "l",
@@ -213,7 +213,7 @@ func main() {
 			},
 			{
 				Name:    "webserver",
-				Aliases: []string{"s"},
+				Aliases: []string{"w"},
 				Usage:   "web ui server",
 				Action: func(c *cli.Context) (err error) {
 					app := &server.App{}
