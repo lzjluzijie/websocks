@@ -1,0 +1,43 @@
+{% extends "base/base.html" %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.min.js"
+        integrity="sha256-mpnrJ5DpEZZkwkE1ZgkEQQJW/46CSEh/STrZKOB/qoM=" crossorigin="anonymous"></script>
+<script>
+    function Login() {
+        let name = document.getElementById("name").value;
+        let password = document.getElementById("password").value;
+        axios.post('/api/v0/server/login', {
+            name,
+            password
+        })
+                .then(console.log)
+                .catch(console.log);
+    }
+</script>
+{% endblock %}
+{% block body %}
+<section class="hero is-success is-fullheight">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <div class="column is-4 is-offset-4">
+                <h3 class="title has-text-grey">Login</h3>
+                <p class="subtitle has-text-grey">Please login to proceed.</p>
+                <div class="box">
+                    <div class="field">
+                        <div class="control">
+                            <input class="input is-large" type="text" id="name" placeholder="Your Name" autofocus="">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <input class="input is-large" type="password" id="password" placeholder="Your Password">
+                        </div>
+                    </div>
+                    <button class="button is-block is-info is-large is-fullwidth" onclick="Login()">Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

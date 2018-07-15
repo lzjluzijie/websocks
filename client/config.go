@@ -2,18 +2,26 @@ package client
 
 import (
 	"crypto/tls"
-	"encoding/json"
-	"io/ioutil"
 	"net"
 	"net/url"
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/urfave/cli"
+	"github.com/lzjluzijie/websocks/core"
 )
 
+type Config struct {
+	ListenAddr string
+	ServerURL  string
+
+	SNI          string
+	InsecureCert bool
+
+	Mux bool
+}
+
 //GetClient return client from path
-func GetClient(config *WebSocksClientConfig) (client *WebSocksClient, err error) {
+func (config *Config) GetClient() (client *WebSocksClient, err error) {
 	//tackle config
 	serverURL, err := url.Parse(config.ServerURL)
 	if err != nil {
@@ -43,30 +51,7 @@ func GetClient(config *WebSocksClientConfig) (client *WebSocksClient, err error)
 		//todo mux
 
 		CreatedAt: time.Now(),
-	}
-	return
-}
-
-//GenerateClientConfig create a client config from cli.Context
-func GenerateClientConfig(c *cli.Context) (err error) {
-	path := c.String("path")
-
-	config := &WebSocksClientConfig{
-		ListenAddr:   c.String("l"),
-		ServerURL:    c.String("s"),
-		SNI:          c.String("sni"),
-		InsecureCert: c.Bool("insecure"),
-		Mux:          c.Bool("mux"),
-	}
-
-	data, err := json.MarshalIndent(config, "", "    ")
-	if err != nil {
-		return
-	}
-
-	err = ioutil.WriteFile(path, data, 600)
-	if err != nil {
-		return
+		Stats:     core.NewStats(),
 	}
 	return
 }

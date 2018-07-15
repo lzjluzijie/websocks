@@ -15,16 +15,16 @@ type WebSocket struct {
 	buf  []byte
 
 	//stats
-	createdAt     time.Time
-	closed        bool
-	AddDownloaded func(downloaded uint64)
-	AddUploaded   func(uploaded uint64)
+	createdAt time.Time
+	closed    bool
+	stats     *Stats
 }
 
-func NewWebSocket(conn *websocket.Conn) (ws *WebSocket) {
+func NewWebSocket(conn *websocket.Conn, stats *Stats) (ws *WebSocket) {
 	ws = &WebSocket{
 		conn:      conn,
 		createdAt: time.Now(),
+		stats:     stats,
 	}
 	return
 }
@@ -44,8 +44,8 @@ func (ws *WebSocket) Read(p []byte) (n int, err error) {
 	n = copy(p, ws.buf)
 	ws.buf = ws.buf[n:]
 
-	if ws.AddDownloaded != nil {
-		go ws.AddDownloaded(uint64(n))
+	if ws.stats != nil {
+		go ws.stats.AddDownloaded(uint64(n))
 	}
 	return
 }
@@ -62,8 +62,8 @@ func (ws *WebSocket) Write(p []byte) (n int, err error) {
 
 	n = len(p)
 
-	if ws.AddUploaded != nil {
-		go ws.AddUploaded(uint64(n))
+	if ws.stats != nil {
+		go ws.stats.AddUploaded(uint64(n))
 	}
 	return
 }

@@ -12,12 +12,3 @@ type WebSocksClientApp struct {
 	//todo multiple client
 	*WebSocksClient
 }
-
-func (app *WebSocksClientApp) GetStatus() (stats *Stats) {
-	if !app.running {
-		return nil
-	}
-
-	stats = app.WebSocksClient.Status()
-	return
-}
