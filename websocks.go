@@ -28,8 +28,18 @@ func main() {
 		Author:      "Halulu",
 		Email:       "lzjluzijie@gmail.com",
 		Action: func(c *cli.Context) (err error) {
-			app := client.WebSocksClientApp{}
-			app.RunWeb()
+			app := &client.App{}
+			data, err := ioutil.ReadFile("client.json")
+			if err != nil {
+				return
+			}
+
+			err = json.Unmarshal(data, app)
+			if err != nil {
+				return
+			}
+
+			err = app.Run()
 			return
 		},
 		Commands: []cli.Command{

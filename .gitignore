@@ -4,5 +4,4 @@ caddy.log
 dist
 websocks.cer
 websocks.key
-*.config.json
 *.pac

@@ -1,5 +1,5 @@
 {
-  "ListenAddr": ":23333",
+  "WebListenAddr": ":23333",
   "TLS": false,
   "CertPath": "websocks.cer",
   "KeyPath": "websocks.key"
