@@ -5,3 +5,4 @@ dist
 websocks.cer
 websocks.key
 *.pac
+*.json

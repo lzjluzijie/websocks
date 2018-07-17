@@ -8,6 +8,9 @@ import (
 	"os"
 	"os/exec"
 
+	"encoding/json"
+	"io/ioutil"
+
 	"github.com/go-macaron/pongo2"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/macaron.v1"
@@ -22,6 +25,37 @@ type App struct {
 	running bool
 	//todo multiple client
 	*WebSocksClient
+}
+
+func LoadApp() (app *App, err error) {
+	app = &App{}
+	data, err := ioutil.ReadFile("client.json")
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(data, app)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func NewApp() (app *App) {
+	app = &App{
+		WebListenAddr: ":10801",
+	}
+	return
+}
+
+func (app *App) Save() (err error) {
+	data, err := json.MarshalIndent(app, "", "    ")
+	if err != nil {
+		return
+	}
+
+	err = ioutil.WriteFile("client.json", data, 0600)
+	return
 }
 
 func (app *App) Run() (err error) {

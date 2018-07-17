@@ -3,11 +3,12 @@ package main
 import (
 	"os"
 
-	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"os/exec"
 	"runtime"
+
+	"log"
 
 	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/client"
@@ -28,15 +29,14 @@ func main() {
 		Author:      "Halulu",
 		Email:       "lzjluzijie@gmail.com",
 		Action: func(c *cli.Context) (err error) {
-			app := &client.App{}
-			data, err := ioutil.ReadFile("client.json")
+			app, err := client.LoadApp()
 			if err != nil {
-				return
-			}
-
-			err = json.Unmarshal(data, app)
-			if err != nil {
-				return
+				log.Println("can not load client.json, create not one")
+				app = client.NewApp()
+				err = app.Save()
+				if err != nil {
+					log.Printf("save config: %s", err.Error())
+				}
 			}
 
 			err = app.Run()
@@ -230,15 +230,14 @@ func main() {
 				Aliases: []string{"w"},
 				Usage:   "web ui server",
 				Action: func(c *cli.Context) (err error) {
-					app := &server.App{}
-					data, err := ioutil.ReadFile("server.json")
+					app, err := server.LoadApp()
 					if err != nil {
-						return
-					}
-
-					err = json.Unmarshal(data, app)
-					if err != nil {
-						return
+						log.Println("can not load server.json, create not one")
+						app = server.NewApp()
+						err = app.Save()
+						if err != nil {
+							log.Printf("save config: %s", err.Error())
+						}
 					}
 
 					err = app.Run()
