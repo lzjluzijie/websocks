@@ -4,6 +4,9 @@ import (
 	"crypto/tls"
 	"net/http"
 
+	"encoding/json"
+	"io/ioutil"
+
 	"github.com/gorilla/sessions"
 	"gopkg.in/macaron.v1"
 )
@@ -12,21 +15,55 @@ type App struct {
 	//todo multiple servers
 	*WebSocksServer
 
-	ListenAddr string
-	TLS        bool
-	CertPath   string
-	KeyPath    string
+	WebListenAddr string
+	TLS           bool
+	CertPath      string
+	KeyPath       string
 
 	s     http.Server
 	store sessions.Store
 	m     *macaron.Macaron
 }
 
+func LoadApp() (app *App, err error) {
+	app = &App{}
+	data, err := ioutil.ReadFile("server.json")
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(data, app)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func NewApp() (app *App) {
+	app = &App{
+		WebListenAddr: ":23333",
+		TLS:           false,
+		CertPath:      "websocks.cer",
+		KeyPath:       "websocks.key",
+	}
+	return
+}
+
+func (app *App) Save() (err error) {
+	data, err := json.MarshalIndent(app, "", "    ")
+	if err != nil {
+		return
+	}
+
+	err = ioutil.WriteFile("server.json", data, 0600)
+	return
+}
+
 func (app *App) Run() (err error) {
 	m := app.Macaron()
 	app.m = m
 	app.s = http.Server{
-		Addr:    app.ListenAddr,
+		Addr:    app.WebListenAddr,
 		Handler: m,
 	}
 
