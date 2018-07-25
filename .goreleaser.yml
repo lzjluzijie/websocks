@@ -25,7 +25,6 @@ archive:
   format_overrides:
   - goos: windows
     format: zip
-  wrap_in_directory: true
   files:
     - LICENSE
     - README.md
