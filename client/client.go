@@ -1,6 +1,7 @@
 package client
 
 import (
+	"log"
 	"net"
 	"time"
 
@@ -8,10 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/lzjluzijie/websocks/core"
-	"github.com/sirupsen/logrus"
 )
-
-var log = logrus.New()
 
 type WebSocksClient struct {
 	ServerURL  *url.URL
@@ -38,12 +36,11 @@ func (client *WebSocksClient) Run() (err error) {
 		return err
 	}
 
-	log.Infof("Start to listen at %s", client.ListenAddr.String())
+	log.Printf("Start to listen at %s", client.ListenAddr.String())
 
 	if client.Mux {
 		err := client.OpenMux()
 		if err != nil {
-			log.Debugf(err.Error())
 			return err
 		}
 
@@ -55,17 +52,17 @@ func (client *WebSocksClient) Run() (err error) {
 		<-client.stopC
 		err = listener.Close()
 		if err != nil {
-			log.Errorf(err.Error())
+			log.Printf(err.Error())
 			return
 		}
 
-		log.Infof("stopped")
+		log.Print("stopped")
 	}()
 
 	for {
 		conn, err := listener.AcceptTCP()
 		if err != nil {
-			log.Debugf(err.Error())
+			log.Printf(err.Error())
 			break
 		}
 
@@ -82,7 +79,7 @@ func (client *WebSocksClient) Stop() {
 func (client *WebSocksClient) HandleConn(conn *net.TCPConn) {
 	lc, err := NewLocalConn(conn)
 	if err != nil {
-		log.Debug(err.Error())
+		log.Printf(err.Error())
 		return
 	}
 
@@ -94,7 +91,7 @@ func (client *WebSocksClient) HandleConn(conn *net.TCPConn) {
 
 	ws, err := client.DialWebSocket(core.NewHostHeader(lc.Host))
 	if err != nil {
-		log.Errorf(err.Error())
+		log.Printf(err.Error())
 		return
 	}
 

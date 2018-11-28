@@ -5,10 +5,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/juju/loggo"
 )
-
-var logger = loggo.GetLogger("core")
 
 type WebSocket struct {
 	conn *websocket.Conn

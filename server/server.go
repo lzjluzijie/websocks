@@ -2,6 +2,7 @@ package server
 
 import (
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"sync"
@@ -18,9 +19,6 @@ import (
 	"github.com/lzjluzijie/websocks/core"
 )
 
-//todo
-var logger = loggo.GetLogger("server")
-
 type WebSocksServer struct {
 	*Config
 	LogLevel loggo.Level
@@ -36,7 +34,7 @@ type WebSocksServer struct {
 func (server *WebSocksServer) HandleWebSocket(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	wsConn, err := server.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logger.Debugf(err.Error())
+		log.Printf(err.Error())
 		return
 	}
 	defer wsConn.Close()
@@ -52,24 +50,24 @@ func (server *WebSocksServer) HandleWebSocket(w http.ResponseWriter, r *http.Req
 	//}
 
 	host := r.Header.Get("WebSocks-Host")
-	logger.Debugf("Dial %s", host)
+	log.Printf("Dial %s", host)
 	conn, err := server.DialRemote(host)
 	if err != nil {
-		logger.Debugf(err.Error())
+		log.Printf(err.Error())
 		return
 	}
 
 	go func() {
 		_, err = io.Copy(conn, ws)
 		if err != nil {
-			logger.Debugf(err.Error())
+			log.Printf(err.Error())
 			return
 		}
 	}()
 
 	_, err = io.Copy(ws, conn)
 	if err != nil {
-		logger.Debugf(err.Error())
+		log.Printf(err.Error())
 		return
 	}
 
@@ -102,7 +100,7 @@ func (server *WebSocksServer) Run() (err error) {
 		Handler: r,
 	}
 
-	logger.Infof("Start to listen at %s", server.ListenAddr)
+	log.Printf("Start to listen at %s", server.ListenAddr)
 
 	if !server.TLS {
 		err = s.ListenAndServe()

@@ -29,14 +29,14 @@ func NewMuxWebSocket(ws *WebSocket) (muxWS *MuxWebSocket) {
 
 func (muxWS *MuxWebSocket) SendMessage(m *Message) (err error) {
 	err = muxWS.Encoder.Encode(m)
-	logger.Debugf("sent %#v", m)
+	//log.Printf("sent %#v", m)
 	return
 }
 
 func (muxWS *MuxWebSocket) ReceiveMessage() (m *Message, err error) {
 	m = &Message{}
 	err = muxWS.Decoder.Decode(m)
-	logger.Debugf("received %#v", m)
+	//log.Printf("received %#v", m)
 	return
 }
 
