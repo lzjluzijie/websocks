@@ -10,7 +10,6 @@ import (
 
 	"log"
 
-	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/client"
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/lzjluzijie/websocks/server"
@@ -18,12 +17,9 @@ import (
 )
 
 func main() {
-	logger := loggo.GetLogger("websocks")
-	logger.SetLogLevel(loggo.INFO)
-
 	app := cli.App{
 		Name:        "WebSocks",
-		Version:     "0.13.2",
+		Version:     "0.14.0",
 		Usage:       "A secure proxy based on WebSocket. Click to start web client.",
 		Description: "websocks.org",
 		Author:      "Halulu",
@@ -32,7 +28,7 @@ func main() {
 			{
 				Name:    "client",
 				Aliases: []string{"c"},
-				Usage:   "start websocks client(cli)",
+				Usage:   "start websocks client",
 				Flags: []cli.Flag{
 					cli.StringFlag{
 						Name:  "l",
@@ -121,19 +117,12 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) (err error) {
-					debug := c.GlobalBool("debug")
 					listenAddr := c.String("l")
 					pattern := c.String("p")
 					tls := c.Bool("tls")
 					certPath := c.String("cert")
 					keyPath := c.String("key")
 					reverseProxy := c.String("reverse-proxy")
-
-					if debug {
-						logger.SetLogLevel(loggo.DEBUG)
-					}
-
-					logger.Infof("Log level %s", logger.LogLevel().String())
 
 					if pattern[0] != '/' {
 						pattern = "/" + pattern
@@ -149,7 +138,7 @@ func main() {
 					}
 
 					websocksServer := config.GetServer()
-					logger.Infof("Listening at %s", listenAddr)
+					log.Printf("Listening at %s", listenAddr)
 					err = websocksServer.Run()
 					if err != nil {
 						return
@@ -180,10 +169,10 @@ func main() {
 					var key, cert []byte
 					if ecdsa {
 						key, cert, err = core.GenP256(hosts)
-						logger.Infof("Generated ecdsa P-256 key and cert")
+						log.Printf("Generated ecdsa P-256 key and cert")
 					} else {
 						key, cert, err = core.GenRSA2048(hosts)
-						logger.Infof("Generated rsa 2048 key and cert")
+						log.Printf("Generated rsa 2048 key and cert")
 					}
 
 					err = ioutil.WriteFile("websocks.key", key, 0600)
@@ -200,7 +189,7 @@ func main() {
 			{
 				Name:    "pac",
 				Aliases: []string{"pac"},
-				Usage:   "set pac for windows",
+				Usage:   "set pac for windows(test)",
 				Action: func(c *cli.Context) (err error) {
 					if runtime.GOOS != "windows" {
 						err = errors.New("not windows")
@@ -211,29 +200,11 @@ func main() {
 					return
 				},
 			},
-			{
-				Name:    "webserver",
-				Aliases: []string{"w"},
-				Usage:   "web ui server",
-				Action: func(c *cli.Context) (err error) {
-					app, err := server.LoadApp()
-					if err != nil {
-						log.Println("can not load server.json, create not one")
-						app = server.NewApp()
-						err = app.Save()
-						if err != nil {
-							log.Printf("save config: %s", err.Error())
-						}
-					}
-
-					err = app.Run()
-					return
-				},
-			},
 		},
 	}
+
 	err := app.Run(os.Args)
 	if err != nil {
-		logger.Errorf(err.Error())
+		log.Printf(err.Error())
 	}
 }
