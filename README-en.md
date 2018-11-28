@@ -29,7 +29,7 @@ The disadvantage is that I have just started development, there is no GUI client
 
 #### Client
 ```
-./websocks client -l :1080 -s wss://websocks.org:443/websocks -n mirror.centos.com --insecure
+./websocks client -l :1080 -s wss://websocks.org:443/websocks -sni mirror.centos.com --insecure
 ```
 
 ### Caddy TLS

@@ -30,7 +30,7 @@
 
 #### 客户端
 ```
-./websocks client -l :1080 -s wss://websocks.org:443/websocks -n mirror.centos.com --insecure
+./websocks client -l :1080 -s wss://websocks.org:443/websocks -sni mirror.centos.com --insecure
 ```
 
 

@@ -40,10 +40,11 @@ func main() {
 						Value: "ws://localhost:23333/websocks",
 						Usage: "server url",
 					},
-					cli.BoolFlag{
-						Name:  "mux",
-						Usage: "mux mode",
-					},
+					//todo 0.15
+					//cli.BoolFlag{
+					//	Name:  "mux",
+					//	Usage: "mux mode",
+					//},
 					cli.StringFlag{
 						Name:  "sni",
 						Value: "",
@@ -57,7 +58,7 @@ func main() {
 				Action: func(c *cli.Context) (err error) {
 					listenAddr := c.String("l")
 					serverURL := c.String("s")
-					mux := c.Bool("mux")
+					//mux := c.Bool("mux")
 					sni := c.String("sni")
 					insecureCert := false
 					if c.Bool("insecure") {
@@ -69,7 +70,7 @@ func main() {
 						ServerURL:    serverURL,
 						SNI:          sni,
 						InsecureCert: insecureCert,
-						Mux:          mux,
+						//Mux:          mux,
 					}
 
 					wc, err := config.GetClient()

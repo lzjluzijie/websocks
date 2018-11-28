@@ -29,4 +29,4 @@ archive:
     - LICENSE
     - README.md
     - README-en.md
-    - templates/**/*
+#    - templates/**/*
