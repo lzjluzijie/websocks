@@ -28,20 +28,6 @@ func main() {
 		Description: "websocks.org",
 		Author:      "Halulu",
 		Email:       "lzjluzijie@gmail.com",
-		Action: func(c *cli.Context) (err error) {
-			app, err := client.LoadApp()
-			if err != nil {
-				log.Println("can not load client.json, create not one")
-				app = client.NewApp()
-				err = app.Save()
-				if err != nil {
-					log.Printf("save config: %s", err.Error())
-				}
-			}
-
-			err = app.Run()
-			return
-		},
 		Commands: []cli.Command{
 			{
 				Name:    "client",
