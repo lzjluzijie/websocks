@@ -19,7 +19,7 @@ import (
 func main() {
 	app := cli.App{
 		Name:        "WebSocks",
-		Version:     "0.14.0",
+		Version:     "0.15.0",
 		Usage:       "A secure proxy based on WebSocket. Click to start web client.",
 		Description: "websocks.org",
 		Author:      "Halulu",
@@ -41,10 +41,10 @@ func main() {
 						Usage: "server url",
 					},
 					//todo 0.15
-					//cli.BoolFlag{
-					//	Name:  "mux",
-					//	Usage: "mux mode",
-					//},
+					cli.BoolFlag{
+						Name:  "mux",
+						Usage: "mux mode",
+					},
 					cli.StringFlag{
 						Name:  "sni",
 						Value: "",
@@ -58,7 +58,7 @@ func main() {
 				Action: func(c *cli.Context) (err error) {
 					listenAddr := c.String("l")
 					serverURL := c.String("s")
-					//mux := c.Bool("mux")
+					mux := c.Bool("mux")
 					sni := c.String("sni")
 					insecureCert := false
 					if c.Bool("insecure") {
@@ -70,7 +70,7 @@ func main() {
 						ServerURL:    serverURL,
 						SNI:          sni,
 						InsecureCert: insecureCert,
-						//Mux:          mux,
+						Mux:          mux,
 					}
 
 					wc, err := config.GetClient()

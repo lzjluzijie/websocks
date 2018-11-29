@@ -23,7 +23,7 @@ func (client *WebSocksClient) OpenMux() (err error) {
 }
 
 func (client *WebSocksClient) DialMuxConn(host string, conn *net.TCPConn) {
-	muxConn := core.NewMuxConn(client.muxWS)
+	muxConn := core.CreateMuxConn(client.muxWS)
 
 	err := muxConn.DialMessage(host)
 	if err != nil {

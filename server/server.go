@@ -42,12 +42,12 @@ func (server *WebSocksServer) HandleWebSocket(w http.ResponseWriter, r *http.Req
 	ws := core.NewWebSocket(wsConn, server.Stats)
 	//todo conns
 
-	////mux
-	//if r.Header.Get("WebSocks-Mux") == "mux" {
-	//	muxWS := NewMuxWebSocket(ws)
-	//	muxWS.ServerListen()
-	//	return
-	//}
+	//mux
+	if r.Header.Get("WebSocks-Mux") == "mux" {
+		muxWS := core.NewMuxWebSocket(ws)
+		muxWS.ServerListen()
+		return
+	}
 
 	host := r.Header.Get("WebSocks-Host")
 	log.Printf("Dial %s", host)
