@@ -40,7 +40,6 @@ func main() {
 						Value: "ws://localhost:23333/websocks",
 						Usage: "server url",
 					},
-					//todo 0.15
 					cli.BoolFlag{
 						Name:  "mux",
 						Usage: "mux mode",

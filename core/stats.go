@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+//todo better stats
 type Stats struct {
 	Downloaded     uint64
 	DownloadSpeed  uint64

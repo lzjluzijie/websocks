@@ -5,6 +5,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/lzjluzijie/websocks/core/mux"
+
 	"net/url"
 
 	"github.com/gorilla/websocket"
@@ -16,13 +18,12 @@ type WebSocksClient struct {
 	ListenAddr *net.TCPAddr
 
 	dialer *websocket.Dialer
-	//connMutex sync.Mutex
-	//wsConns []*core.WebSocket
-	muxWS *core.MuxWebSocket
 
-	//todo enable mux
 	Mux bool
 
+	muxGroup *mux.Group
+
+	//todo
 	//control
 	stopC chan int
 
@@ -39,12 +40,19 @@ func (client *WebSocksClient) Run() (err error) {
 	log.Printf("Start to listen at %s", client.ListenAddr.String())
 
 	if client.Mux {
-		err := client.OpenMux()
-		if err != nil {
-			return err
-		}
-
-		go client.ListenMuxWS(client.muxWS)
+		group := mux.NewGroup(true)
+		go func() {
+			//todo
+			for {
+				if len(group.MuxWSs) == 0 {
+					err := client.OpenMux()
+					if err != nil {
+						log.Printf(err.Error())
+						continue
+					}
+				}
+			}
+		}()
 	}
 
 	go func() {
@@ -83,13 +91,18 @@ func (client *WebSocksClient) HandleConn(conn *net.TCPConn) {
 		return
 	}
 
-	//todo mux
+	host := lc.Host
+
 	if client.Mux {
-		client.DialMuxConn(lc.Host, conn)
+		err = client.muxGroup.NewMuxConn(host)
+		if err != nil {
+			log.Printf(err.Error())
+			return
+		}
 		return
 	}
 
-	ws, err := client.DialWebSocket(core.NewHostHeader(lc.Host))
+	ws, err := client.DialWebSocket(core.NewHostHeader(host))
 	if err != nil {
 		log.Printf(err.Error())
 		return

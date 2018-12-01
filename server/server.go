@@ -5,8 +5,9 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"sync"
 	"time"
+
+	"github.com/lzjluzijie/websocks/core/mux"
 
 	"net/http/httputil"
 	"net/url"
@@ -23,9 +24,10 @@ type WebSocksServer struct {
 	*Config
 	LogLevel loggo.Level
 
-	Upgrader   *websocket.Upgrader
-	muxConnMap sync.Map
-	mutex      sync.Mutex
+	Upgrader *websocket.Upgrader
+
+	//todo multiple clients
+	group *mux.Group
 
 	CreatedAt time.Time
 	Stats     *core.Stats
@@ -43,9 +45,10 @@ func (server *WebSocksServer) HandleWebSocket(w http.ResponseWriter, r *http.Req
 	//todo conns
 
 	//mux
-	if r.Header.Get("WebSocks-Mux") == "mux" {
-		muxWS := core.NewMuxWebSocket(ws)
-		muxWS.ServerListen()
+	//todo multiple clients
+	if r.Header.Get("WebSocks-Mux") == "v0.15" {
+		muxWS := mux.NewMuxWebSocket(ws)
+		server.group.AddMuxWS(muxWS)
 		return
 	}
 
