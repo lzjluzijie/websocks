@@ -37,15 +37,17 @@ func (m *Message) Read(p []byte) (n int, err error) {
 	return m.r.Read(p)
 }
 
-func (m *Message) SetHead(h []byte) {
+func LoadMessage(h []byte) (m *Message) {
 	if len(h) != 13 {
 		panic(fmt.Sprintf("wrong head length: %d", len(h)))
 		return
 	}
 
-	m.Method = h[0]
-	m.ConnID = binary.BigEndian.Uint32(h[1:5])
-	m.MessageID = binary.BigEndian.Uint32(h[5:9])
-	m.Length = binary.BigEndian.Uint32(h[9:13])
+	m = &Message{
+		Method:    h[0],
+		ConnID:    binary.BigEndian.Uint32(h[1:5]),
+		MessageID: binary.BigEndian.Uint32(h[5:9]),
+		Length:    binary.BigEndian.Uint32(h[9:13]),
+	}
 	return
 }

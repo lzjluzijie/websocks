@@ -39,12 +39,12 @@ func (conn *Conn) Write(p []byte) (n int, err error) {
 
 func (conn *Conn) Read(p []byte) (n int, err error) {
 	if len(conn.buf) == 0 {
-		log.Printf("%d buf is 0, waiting", conn.ID)
+		//log.Printf("%d buf is 0, waiting", conn.ID)
 		<-conn.wait
 	}
 
 	conn.mutex.Lock()
-	log.Printf("%d buf: %v", conn.buf)
+	//log.Printf("%d buf: %v",conn.ID, conn.buf)
 	n = copy(p, conn.buf)
 	conn.buf = conn.buf[n:]
 	conn.mutex.Unlock()
@@ -52,7 +52,7 @@ func (conn *Conn) Read(p []byte) (n int, err error) {
 }
 
 func (conn *Conn) HandleMessage(m *Message) (err error) {
-	log.Printf("handle message %d %d", m.ConnID, m.MessageID)
+	//log.Printf("handle message %d %d", m.ConnID, m.MessageID)
 	for {
 		if conn.receiveMessageID == m.MessageID {
 			conn.mutex.Lock()

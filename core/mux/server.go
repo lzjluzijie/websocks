@@ -2,21 +2,24 @@ package mux
 
 import (
 	"log"
-	"math/rand"
 	"net"
 )
 
-//HandleMessage is a server group function
-func (group *Group) HandleMessage(m *Message) (err error) {
+//ServerHandleMessage is a server group function
+func (group *Group) ServerHandleMessage(m *Message) (err error) {
 	//accept new conn
 	if m.Method == MessageMethodDial {
 		host := string(m.Data)
 		log.Printf("start to dial %s", host)
 		conn := &Conn{
-			ID:            rand.Uint32(),
+			ID:            m.ConnID,
 			wait:          make(chan int),
 			sendMessageID: new(uint32),
+			group:         group,
 		}
+
+		//add to group before receive data
+		group.Conns = append(group.Conns, conn)
 
 		tcpAddr, err := net.ResolveTCPAddr("tcp", host)
 		if err != nil {

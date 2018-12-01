@@ -2,7 +2,6 @@ package mux
 
 import (
 	"io"
-	"log"
 	"sync"
 
 	"github.com/lzjluzijie/websocks/core"
@@ -30,19 +29,19 @@ func (muxWS *MuxWebSocket) Send(m *Message) (err error) {
 		return
 	}
 
-	log.Printf("sent %#v", m)
+	//log.Printf("sent %#v", m)
 	muxWS.mutex.Unlock()
 	return
 }
 
-func (muxWS *MuxWebSocket) Receive(m *Message) (err error) {
+func (muxWS *MuxWebSocket) Receive() (m *Message, err error) {
 	h := make([]byte, 13)
 	_, err = muxWS.Read(h)
 	if err != nil {
 		return
 	}
 
-	m.SetHead(h)
+	m = LoadMessage(h)
 	data := make([]byte, m.Length)
 
 	_, err = muxWS.Read(data)
@@ -51,22 +50,6 @@ func (muxWS *MuxWebSocket) Receive(m *Message) (err error) {
 	}
 
 	m.Data = data
-	log.Printf("received %#v", m)
+	//log.Printf("received %#v", m)
 	return
-}
-
-func (muxWS *MuxWebSocket) Listen() {
-	go func() {
-		for {
-			m := &Message{}
-			err := muxWS.Receive(m)
-			if err != nil {
-				log.Printf(err.Error())
-				return
-			}
-
-			go muxWS.group.Receive(m)
-		}
-		return
-	}()
 }

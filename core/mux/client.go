@@ -20,5 +20,10 @@ func (group *Group) NewMuxConn(host string) (conn *Conn, err error) {
 	}
 
 	err = group.Send(m)
+	if err != nil {
+		return
+	}
+
+	group.Conns = append(group.Conns, conn)
 	return
 }

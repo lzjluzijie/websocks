@@ -86,6 +86,8 @@ func (client *WebSocksClient) Stop() {
 }
 
 func (client *WebSocksClient) HandleConn(conn *net.TCPConn) {
+	log.Println("new socks5 conn")
+
 	lc, err := NewLocalConn(conn)
 	if err != nil {
 		log.Printf(err.Error())
