@@ -32,19 +32,13 @@ type WebSocksClient struct {
 }
 
 func (client *WebSocksClient) Run() (err error) {
-	listener, err := net.ListenTCP("tcp", client.ListenAddr)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Start to listen at %s", client.ListenAddr.String())
-
 	if client.Mux {
-		group := mux.NewGroup(true)
+		client.muxGroup = mux.NewGroup(true)
+		log.Println("group created")
 		go func() {
 			//todo
 			for {
-				if len(group.MuxWSs) == 0 {
+				if len(client.muxGroup.MuxWSs) == 0 {
 					err := client.OpenMux()
 					if err != nil {
 						log.Printf(err.Error())
@@ -54,6 +48,13 @@ func (client *WebSocksClient) Run() (err error) {
 			}
 		}()
 	}
+
+	listener, err := net.ListenTCP("tcp", client.ListenAddr)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Start to listen at %s", client.ListenAddr.String())
 
 	go func() {
 		client.stopC = make(chan int)
@@ -94,11 +95,15 @@ func (client *WebSocksClient) HandleConn(conn *net.TCPConn) {
 	host := lc.Host
 
 	if client.Mux {
-		err = client.muxGroup.NewMuxConn(host)
+		muxConn, err := client.muxGroup.NewMuxConn(host)
 		if err != nil {
 			log.Printf(err.Error())
 			return
 		}
+
+		log.Printf("created #%v", muxConn)
+
+		muxConn.Run(conn)
 		return
 	}
 

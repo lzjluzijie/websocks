@@ -3,6 +3,7 @@ package mux
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 )
 
@@ -33,18 +34,18 @@ func (m *Message) Read(p []byte) (n int, err error) {
 		m.r = bytes.NewReader(append(h, m.Data...))
 	}
 
-	n, err = m.Read(p)
-	return len(p), nil
+	return m.r.Read(p)
 }
 
-func (m *Message) Write(p []byte) (n int, err error) {
-	m.buf = append(m.buf, p...)
-	if len(m.buf) >= 13 {
-		m.Method = m.buf[0]
-		m.ConnID = binary.BigEndian.Uint32(m.buf[1:5])
-		m.MessageID = binary.BigEndian.Uint32(m.buf[5:9])
-		m.Length = binary.BigEndian.Uint32(m.buf[9:13])
-		m.Data = m.buf[13:]
+func (m *Message) SetHead(h []byte) {
+	if len(h) != 13 {
+		panic(fmt.Sprintf("wrong head length: %d", len(h)))
+		return
 	}
-	return len(p), nil
+
+	m.Method = h[0]
+	m.ConnID = binary.BigEndian.Uint32(h[1:5])
+	m.MessageID = binary.BigEndian.Uint32(h[5:9])
+	m.Length = binary.BigEndian.Uint32(h[9:13])
+	return
 }

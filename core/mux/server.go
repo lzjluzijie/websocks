@@ -11,6 +11,7 @@ func (group *Group) HandleMessage(m *Message) (err error) {
 	//accept new conn
 	if m.Method == MessageMethodDial {
 		host := string(m.Data)
+		log.Printf("start to dial %s", host)
 		conn := &Conn{
 			ID:            rand.Uint32(),
 			wait:          make(chan int),

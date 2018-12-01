@@ -27,7 +27,7 @@ type WebSocksServer struct {
 	Upgrader *websocket.Upgrader
 
 	//todo multiple clients
-	group *mux.Group
+	muxGroup *mux.Group
 
 	CreatedAt time.Time
 	Stats     *core.Stats
@@ -46,8 +46,12 @@ func (server *WebSocksServer) HandleWebSocket(w http.ResponseWriter, r *http.Req
 	//mux
 	//todo multiple clients
 	if r.Header.Get("WebSocks-Mux") == "v0.15" {
+		if server.muxGroup == nil {
+			server.muxGroup = mux.NewGroup(false)
+		}
 		muxWS := mux.NewMuxWebSocket(ws)
-		server.group.AddMuxWS(muxWS)
+		server.muxGroup.AddMuxWS(muxWS)
+		time.Sleep(time.Hour)
 		return
 	}
 

@@ -2,6 +2,7 @@ package mux
 
 import (
 	"io"
+	"log"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -21,14 +22,15 @@ type Conn struct {
 }
 
 func (conn *Conn) Write(p []byte) (n int, err error) {
-	mh := &Message{
+	m := &Message{
 		Method:    MessageMethodData,
 		ConnID:    conn.ID,
 		MessageID: conn.SendMessageID(),
 		Length:    uint32(len(p)),
+		Data:      p,
 	}
 
-	err = conn.group.Send(mh)
+	err = conn.group.Send(m)
 	if err != nil {
 		return 0, err
 	}
@@ -37,12 +39,12 @@ func (conn *Conn) Write(p []byte) (n int, err error) {
 
 func (conn *Conn) Read(p []byte) (n int, err error) {
 	if len(conn.buf) == 0 {
-		//log.Printf("%d buf is 0, waiting", conn.ID)
+		log.Printf("%d buf is 0, waiting", conn.ID)
 		<-conn.wait
 	}
 
 	conn.mutex.Lock()
-	//log.Printf("%d buf: %v", conn.buf)
+	log.Printf("%d buf: %v", conn.buf)
 	n = copy(p, conn.buf)
 	conn.buf = conn.buf[n:]
 	conn.mutex.Unlock()
@@ -50,7 +52,7 @@ func (conn *Conn) Read(p []byte) (n int, err error) {
 }
 
 func (conn *Conn) HandleMessage(m *Message) (err error) {
-	//log.Printf("handle message %d %d", mh.ConnID, mh.MessageID)
+	log.Printf("handle message %d %d", m.ConnID, m.MessageID)
 	for {
 		if conn.receiveMessageID == m.MessageID {
 			conn.mutex.Lock()
@@ -59,7 +61,7 @@ func (conn *Conn) HandleMessage(m *Message) (err error) {
 			close(conn.wait)
 			conn.wait = make(chan int)
 			conn.mutex.Unlock()
-			//log.Printf("handled message %d %d", mh.ConnID, mh.MessageID)
+			log.Printf("handled message %d %d", m.ConnID, m.MessageID)
 			return
 		}
 		<-conn.wait
@@ -77,13 +79,13 @@ func (conn *Conn) Run(c *net.TCPConn) {
 	go func() {
 		_, err := io.Copy(c, conn)
 		if err != nil {
-			//log.Printf(err.Error())
+			log.Printf(err.Error())
 		}
 	}()
 
 	_, err := io.Copy(conn, c)
 	if err != nil {
-		//log.Printf(err.Error())
+		log.Printf(err.Error())
 	}
 
 	return

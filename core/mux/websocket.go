@@ -24,21 +24,33 @@ func NewMuxWebSocket(ws *core.WebSocket) (muxWS *MuxWebSocket) {
 }
 
 func (muxWS *MuxWebSocket) Send(m *Message) (err error) {
+	muxWS.mutex.Lock()
 	_, err = io.Copy(muxWS, m)
 	if err != nil {
 		return
 	}
 
 	log.Printf("sent %#v", m)
+	muxWS.mutex.Unlock()
 	return
 }
 
 func (muxWS *MuxWebSocket) Receive(m *Message) (err error) {
-	_, err = io.Copy(m, muxWS)
+	h := make([]byte, 13)
+	_, err = muxWS.Read(h)
 	if err != nil {
 		return
 	}
 
+	m.SetHead(h)
+	data := make([]byte, m.Length)
+
+	_, err = muxWS.Read(data)
+	if err != nil {
+		return
+	}
+
+	m.Data = data
 	log.Printf("received %#v", m)
 	return
 }
@@ -49,12 +61,11 @@ func (muxWS *MuxWebSocket) Listen() {
 			m := &Message{}
 			err := muxWS.Receive(m)
 			if err != nil {
-				//todo
 				log.Printf(err.Error())
-				continue
+				return
 			}
 
-			muxWS.group.Receive(m)
+			go muxWS.group.Receive(m)
 		}
 		return
 	}()

@@ -25,12 +25,15 @@ func NewGroup(client bool) (group *Group) {
 
 func (group *Group) Send(m *Message) (err error) {
 	//todo
-	err = group.MuxWSs[0].Send(m)
+	for group.MuxWSs != nil {
+		err = group.MuxWSs[0].Send(m)
+		return
+	}
 	return
 }
 
 func (group *Group) Receive(m *Message) (err error) {
-	if !group.client {
+	if !group.client && m.Method != MessageMethodData {
 		group.HandleMessage(m)
 	}
 
