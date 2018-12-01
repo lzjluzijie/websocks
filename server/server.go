@@ -42,7 +42,6 @@ func (server *WebSocksServer) HandleWebSocket(w http.ResponseWriter, r *http.Req
 	defer wsConn.Close()
 
 	ws := core.NewWebSocket(wsConn, server.Stats)
-	//todo conns
 
 	//mux
 	//todo multiple clients

@@ -10,13 +10,14 @@ func (group *Group) NewMuxConn(host string) (err error) {
 		sendMessageID: new(uint32),
 	}
 
-	mh := &MessageHead{
+	m := &Message{
 		Method:    MessageMethodDial,
 		MessageID: 4294967295,
 		ConnID:    conn.ID,
 		Length:    uint32(len(host)),
+		Data:      []byte(host),
 	}
 
-	err = group.Send(mh, []byte(host))
+	err = group.Send(m)
 	return
 }

@@ -2,9 +2,6 @@ package mux
 
 import (
 	"errors"
-	"log"
-	"math/rand"
-	"net"
 )
 
 type Group struct {
@@ -26,47 +23,22 @@ func NewGroup(client bool) (group *Group) {
 	return
 }
 
-func (group *Group) Send(mh *MessageHead, data []byte) (err error) {
+func (group *Group) Send(m *Message) (err error) {
 	//todo
-	err = group.MuxWSs[0].Send(mh, data)
+	err = group.MuxWSs[0].Send(m)
 	return
 }
 
-func (group *Group) Receive(mh *MessageHead, data []byte) (err error) {
+func (group *Group) Receive(m *Message) (err error) {
 	if !group.client {
-		//accept new conn
-		if mh.Method == MessageMethodDial {
-			host := string(data)
-			conn := &Conn{
-				ID:            rand.Uint32(),
-				wait:          make(chan int),
-				sendMessageID: new(uint32),
-			}
-
-			tcpAddr, err := net.ResolveTCPAddr("tcp", host)
-			if err != nil {
-				log.Printf(err.Error())
-				return err
-			}
-
-			tcpConn, err := net.DialTCP("tcp", nil, tcpAddr)
-			if err != nil {
-				log.Printf(err.Error())
-				return err
-			}
-
-			log.Printf("Accepted mux conn %s", host)
-
-			conn.Run(tcpConn)
-			return err
-		}
+		group.HandleMessage(m)
 	}
 
 	//get conn and send message
 	//todo better way to find conn
 	for _, conn := range group.Conns {
-		if conn.ID == mh.ConnID {
-			err = conn.HandleMessage(mh, data)
+		if conn.ID == m.ConnID {
+			err = conn.HandleMessage(m)
 			if err != nil {
 				return
 			}
@@ -74,11 +46,6 @@ func (group *Group) Receive(mh *MessageHead, data []byte) (err error) {
 	}
 
 	err = errors.New("conn does not exist")
-	return
-}
-
-func (group *Group) Start() (err error) {
-
 	return
 }
 

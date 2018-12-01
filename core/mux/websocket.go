@@ -1,7 +1,7 @@
 package mux
 
 import (
-	"encoding/binary"
+	"io"
 	"log"
 	"sync"
 
@@ -23,13 +23,8 @@ func NewMuxWebSocket(ws *core.WebSocket) (muxWS *MuxWebSocket) {
 	return
 }
 
-func (muxWS *MuxWebSocket) Send(m *MessageHead, data []byte) (err error) {
-	err = binary.Write(muxWS, binary.BigEndian, m)
-	if err != nil {
-		return
-	}
-
-	_, err = muxWS.Write(data)
+func (muxWS *MuxWebSocket) Send(m *Message) (err error) {
+	_, err = io.Copy(muxWS, m)
 	if err != nil {
 		return
 	}
@@ -38,13 +33,8 @@ func (muxWS *MuxWebSocket) Send(m *MessageHead, data []byte) (err error) {
 	return
 }
 
-func (muxWS *MuxWebSocket) Receive(m *MessageHead, data []byte) (err error) {
-	err = binary.Read(muxWS, binary.BigEndian, m)
-	if err != nil {
-		return
-	}
-
-	_, err = muxWS.Read(data)
+func (muxWS *MuxWebSocket) Receive(m *Message) (err error) {
+	_, err = io.Copy(m, muxWS)
 	if err != nil {
 		return
 	}
@@ -56,16 +46,15 @@ func (muxWS *MuxWebSocket) Receive(m *MessageHead, data []byte) (err error) {
 func (muxWS *MuxWebSocket) Listen() {
 	go func() {
 		for {
-			mh := &MessageHead{}
-			data := make([]byte, 0)
-			err := muxWS.Receive(mh, data)
+			m := &Message{}
+			err := muxWS.Receive(m)
 			if err != nil {
 				//todo
 				log.Printf(err.Error())
 				continue
 			}
 
-			muxWS.group.Receive(mh, data)
+			muxWS.group.Receive(m)
 		}
 		return
 	}()

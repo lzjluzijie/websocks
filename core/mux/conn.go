@@ -21,14 +21,14 @@ type Conn struct {
 }
 
 func (conn *Conn) Write(p []byte) (n int, err error) {
-	mh := &MessageHead{
+	mh := &Message{
 		Method:    MessageMethodData,
 		ConnID:    conn.ID,
 		MessageID: conn.SendMessageID(),
 		Length:    uint32(len(p)),
 	}
 
-	err = conn.group.Send(mh, p)
+	err = conn.group.Send(mh)
 	if err != nil {
 		return 0, err
 	}
@@ -49,12 +49,12 @@ func (conn *Conn) Read(p []byte) (n int, err error) {
 	return
 }
 
-func (conn *Conn) HandleMessage(mh *MessageHead, data []byte) (err error) {
+func (conn *Conn) HandleMessage(m *Message) (err error) {
 	//log.Printf("handle message %d %d", mh.ConnID, mh.MessageID)
 	for {
-		if conn.receiveMessageID == mh.MessageID {
+		if conn.receiveMessageID == m.MessageID {
 			conn.mutex.Lock()
-			conn.buf = append(conn.buf, data...)
+			conn.buf = append(conn.buf, m.Data...)
 			conn.receiveMessageID++
 			close(conn.wait)
 			conn.wait = make(chan int)

@@ -119,8 +119,5 @@ func (client *WebSocksClient) DialWebSocket(header map[string][]string) (ws *cor
 	}
 
 	ws = core.NewWebSocket(wsConn, client.Stats)
-	//client.connMutex.Lock()
-	//client.wsConns = append(client.wsConns, ws)
-	//client.connMutex.Unlock()
 	return
 }
