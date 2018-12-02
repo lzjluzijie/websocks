@@ -17,9 +17,14 @@ import (
 
 func main() {
 	app := cli.App{
-		Name:        "WebSocks",
+		Name: "WebSocks",
+		/*
+			todo more websocket connections
+			todo better log
+			todo better stats
+		*/
 		Version:     "0.15.0",
-		Usage:       "A secure proxy based on WebSocket. Click to start web client.",
+		Usage:       "A secure proxy based on WebSocket.",
 		Description: "websocks.org",
 		Author:      "Halulu",
 		Email:       "lzjluzijie@gmail.com",
@@ -40,8 +45,9 @@ func main() {
 						Usage: "server url",
 					},
 					cli.BoolFlag{
-						Name:  "mux",
-						Usage: "mux mode",
+						Name: "mux",
+						//todo
+						Usage: "mux mode(test)",
 					},
 					cli.StringFlag{
 						Name:  "sni",
