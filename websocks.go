@@ -1,10 +1,9 @@
 package main
 
 import (
-	"os"
-
 	"errors"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"runtime"
 

@@ -45,6 +45,8 @@ func (client *WebSocksClient) Run() (err error) {
 						continue
 					}
 				}
+				//这个弱智BUG折腾了我一天
+				time.Sleep(time.Second)
 			}
 		}()
 	}
