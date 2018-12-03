@@ -22,7 +22,7 @@ func main() {
 			todo better log
 			todo better stats
 		*/
-		Version:     "0.15.0",
+		Version:     "0.15.1",
 		Usage:       "A secure proxy based on WebSocket.",
 		Description: "websocks.org",
 		Author:      "Halulu",
