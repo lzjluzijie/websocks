@@ -10,7 +10,10 @@ func (group *Group) ServerHandleMessage(m *Message) (err error) {
 	//accept new conn
 	if m.Method == MessageMethodDial {
 		host := string(m.Data)
-		log.Printf("start to dial %s", host)
+
+		//debug log
+		//log.Printf("start to dial %s", host)
+
 		conn := &Conn{
 			ID:            m.ConnID,
 			wait:          make(chan int),
@@ -19,21 +22,24 @@ func (group *Group) ServerHandleMessage(m *Message) (err error) {
 		}
 
 		//add to group before receive data
-		group.Conns = append(group.Conns, conn)
+		group.AddConn(conn)
 
 		tcpAddr, err := net.ResolveTCPAddr("tcp", host)
 		if err != nil {
+			conn.Close()
 			log.Printf(err.Error())
 			return err
 		}
 
 		tcpConn, err := net.DialTCP("tcp", nil, tcpAddr)
 		if err != nil {
+			conn.Close()
 			log.Printf(err.Error())
 			return err
 		}
 
-		log.Printf("Accepted mux conn %s", host)
+		//debug log
+		log.Printf("Accepted mux conn: %x, %s", conn.ID, host)
 
 		conn.Run(tcpConn)
 		return err

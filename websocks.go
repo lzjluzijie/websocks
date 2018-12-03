@@ -3,11 +3,10 @@ package main
 import (
 	"errors"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"runtime"
-
-	"log"
 
 	"github.com/lzjluzijie/websocks/client"
 	"github.com/lzjluzijie/websocks/core"
@@ -207,6 +206,23 @@ func main() {
 			},
 		},
 	}
+
+	////pprof debug
+	//go func() {
+	//	f, err := os.Create(fmt.Sprintf("%d.prof", time.Now().Unix()))
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//
+	//	err = pprof.StartCPUProfile(f)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//
+	//	time.Sleep(time.Second * 30)
+	//	pprof.StopCPUProfile()
+	//	os.Exit(0)
+	//}()
 
 	err := app.Run(os.Args)
 	if err != nil {
