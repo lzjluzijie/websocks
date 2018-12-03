@@ -2,10 +2,12 @@ package server
 
 import (
 	"io"
+	"log"
 	"net"
 	"net/http"
-	"sync"
 	"time"
+
+	"github.com/lzjluzijie/websocks/core/mux"
 
 	"net/http/httputil"
 	"net/url"
@@ -18,16 +20,14 @@ import (
 	"github.com/lzjluzijie/websocks/core"
 )
 
-//todo
-var logger = loggo.GetLogger("server")
-
 type WebSocksServer struct {
 	*Config
 	LogLevel loggo.Level
 
-	Upgrader   *websocket.Upgrader
-	muxConnMap sync.Map
-	mutex      sync.Mutex
+	Upgrader *websocket.Upgrader
+
+	//todo multiple clients
+	muxGroup *mux.Group
 
 	CreatedAt time.Time
 	Stats     *core.Stats
@@ -36,40 +36,44 @@ type WebSocksServer struct {
 func (server *WebSocksServer) HandleWebSocket(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	wsConn, err := server.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logger.Debugf(err.Error())
+		log.Printf(err.Error())
 		return
 	}
 	defer wsConn.Close()
 
 	ws := core.NewWebSocket(wsConn, server.Stats)
-	//todo conns
 
-	////mux
-	//if r.Header.Get("WebSocks-Mux") == "mux" {
-	//	muxWS := NewMuxWebSocket(ws)
-	//	muxWS.ServerListen()
-	//	return
-	//}
+	//mux
+	//todo multiple clients
+	if r.Header.Get("WebSocks-Mux") == "v0.15" {
+		if server.muxGroup == nil {
+			server.muxGroup = mux.NewGroup(false)
+		}
+		muxWS := mux.NewMuxWebSocket(ws)
+		server.muxGroup.AddMuxWS(muxWS)
+		time.Sleep(time.Hour)
+		return
+	}
 
 	host := r.Header.Get("WebSocks-Host")
-	logger.Debugf("Dial %s", host)
+	log.Printf("Dial %s", host)
 	conn, err := server.DialRemote(host)
 	if err != nil {
-		logger.Debugf(err.Error())
+		log.Printf(err.Error())
 		return
 	}
 
 	go func() {
 		_, err = io.Copy(conn, ws)
 		if err != nil {
-			logger.Debugf(err.Error())
+			log.Printf(err.Error())
 			return
 		}
 	}()
 
 	_, err = io.Copy(ws, conn)
 	if err != nil {
-		logger.Debugf(err.Error())
+		log.Printf(err.Error())
 		return
 	}
 
@@ -102,7 +106,7 @@ func (server *WebSocksServer) Run() (err error) {
 		Handler: r,
 	}
 
-	logger.Infof("Start to listen at %s", server.ListenAddr)
+	log.Printf("Start to listen at %s", server.ListenAddr)
 
 	if !server.TLS {
 		err = s.ListenAndServe()

@@ -48,8 +48,7 @@ func (config *Config) GetClient() (client *WebSocksClient, err error) {
 			TLSClientConfig:  tlsConfig,
 		},
 
-		//todo mux
-
+		Mux:       config.Mux,
 		CreatedAt: time.Now(),
 		Stats:     core.NewStats(),
 	}

@@ -2,13 +2,11 @@ package core
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/juju/loggo"
 )
-
-var logger = loggo.GetLogger("core")
 
 type WebSocket struct {
 	conn *websocket.Conn
@@ -35,6 +33,7 @@ func (ws *WebSocket) Read(p []byte) (n int, err error) {
 	}
 
 	if len(ws.buf) == 0 {
+		log.Println("empty buf, waiting")
 		_, ws.buf, err = ws.conn.ReadMessage()
 		if err != nil {
 			return

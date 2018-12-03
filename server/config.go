@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/juju/loggo"
 	"github.com/lzjluzijie/websocks/core"
 )
 
@@ -28,7 +27,5 @@ func (config *Config) GetServer() (server *WebSocksServer) {
 		CreatedAt: time.Now(),
 		Stats:     core.NewStats(),
 	}
-
-	logger.SetLogLevel(loggo.DEBUG)
 	return
 }

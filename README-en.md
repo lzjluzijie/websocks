@@ -2,6 +2,8 @@
 
 A secure proxy based on websocket.
 
+**Websocks will be temporarily suspended for a few more months because I have to apply for university. I'm really sorry and I promise I will come back.**
+
 This project is still working in progress, more features are still in development. If you are interested in this project, please star this project in order to support me. Thank you.
 
 If you have any problems or suggestions, please do not hesitate to submit issues or contact me [@halulu](https://t.me/halulu).
@@ -27,7 +29,7 @@ The disadvantage is that I have just started development, there is no GUI client
 
 #### Client
 ```
-./websocks client -l :1080 -s wss://websocks.org:443/websocks -n mirror.centos.com --insecure
+./websocks client -l :1080 -s wss://websocks.org:443/websocks -sni mirror.centos.com --insecure
 ```
 
 ### Caddy TLS

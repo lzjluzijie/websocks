@@ -1,14 +1,13 @@
 package client
 
 import (
-	"net"
-
 	"github.com/lzjluzijie/websocks/core"
+	"github.com/lzjluzijie/websocks/core/mux"
 )
 
 func (client *WebSocksClient) OpenMux() (err error) {
 	wsConn, _, err := client.dialer.Dial(client.ServerURL.String(), map[string][]string{
-		"WebSocks-Mux": {"mux"},
+		"WebSocks-Mux": {"v0.15"},
 	})
 
 	if err != nil {
@@ -17,46 +16,7 @@ func (client *WebSocksClient) OpenMux() (err error) {
 
 	ws := core.NewWebSocket(wsConn, client.Stats)
 
-	muxWS := core.NewMuxWebSocket(ws)
-	client.muxWS = muxWS
+	muxWS := mux.NewMuxWebSocket(ws)
+	client.muxGroup.AddMuxWS(muxWS)
 	return
-}
-
-func (client *WebSocksClient) DialMuxConn(host string, conn *net.TCPConn) {
-	muxConn := core.NewMuxConn(client.muxWS)
-
-	err := muxConn.DialMessage(host)
-	if err != nil {
-		log.Errorf(err.Error())
-		err = client.OpenMux()
-		if err != nil {
-			log.Errorf(err.Error())
-		}
-		return
-	}
-
-	muxConn.MuxWS.PutMuxConn(muxConn)
-
-	log.Debugf("dialed mux for %s", host)
-
-	muxConn.Run(conn)
-	return
-}
-
-func (client *WebSocksClient) ListenMuxWS(muxWS *core.MuxWebSocket) {
-	for {
-		m, err := muxWS.ReceiveMessage()
-		if err != nil {
-			log.Debugf(err.Error())
-			return
-		}
-
-		//get conn and send message
-		conn := muxWS.GetMuxConn(m.ConnID)
-		err = conn.HandleMessage(m)
-		if err != nil {
-			log.Debugf(err.Error())
-			continue
-		}
-	}
 }

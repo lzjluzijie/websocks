@@ -49,7 +49,7 @@ func (lc *LocalConn) Run(ws *core.WebSocket) {
 	go func() {
 		_, err := io.Copy(lc, ws)
 		if err != nil {
-			log.Debugf(err.Error())
+			//log.Printf(err.Error())
 			return
 		}
 		return
@@ -58,7 +58,7 @@ func (lc *LocalConn) Run(ws *core.WebSocket) {
 	go func() {
 		_, err := io.Copy(ws, lc)
 		if err != nil {
-			log.Debugf(err.Error())
+			//log.Printf(err.Error())
 			return
 		}
 	}()

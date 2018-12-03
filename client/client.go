@@ -1,30 +1,29 @@
 package client
 
 import (
+	"log"
 	"net"
 	"time"
+
+	"github.com/lzjluzijie/websocks/core/mux"
 
 	"net/url"
 
 	"github.com/gorilla/websocket"
 	"github.com/lzjluzijie/websocks/core"
-	"github.com/sirupsen/logrus"
 )
-
-var log = logrus.New()
 
 type WebSocksClient struct {
 	ServerURL  *url.URL
 	ListenAddr *net.TCPAddr
 
 	dialer *websocket.Dialer
-	//connMutex sync.Mutex
-	//wsConns []*core.WebSocket
-	muxWS *core.MuxWebSocket
 
-	//todo enable mux
 	Mux bool
 
+	muxGroup *mux.Group
+
+	//todo
 	//control
 	stopC chan int
 
@@ -33,39 +32,48 @@ type WebSocksClient struct {
 }
 
 func (client *WebSocksClient) Run() (err error) {
+	if client.Mux {
+		client.muxGroup = mux.NewGroup(true)
+		log.Println("group created")
+		go func() {
+			//todo
+			for {
+				if len(client.muxGroup.MuxWSs) == 0 {
+					err := client.OpenMux()
+					if err != nil {
+						log.Printf(err.Error())
+						continue
+					}
+				}
+				//这个弱智BUG折腾了我一天
+				time.Sleep(time.Second)
+			}
+		}()
+	}
+
 	listener, err := net.ListenTCP("tcp", client.ListenAddr)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("Start to listen at %s", client.ListenAddr.String())
-
-	if client.Mux {
-		err := client.OpenMux()
-		if err != nil {
-			log.Debugf(err.Error())
-			return err
-		}
-
-		go client.ListenMuxWS(client.muxWS)
-	}
+	log.Printf("Start to listen at %s", client.ListenAddr.String())
 
 	go func() {
 		client.stopC = make(chan int)
 		<-client.stopC
 		err = listener.Close()
 		if err != nil {
-			log.Errorf(err.Error())
+			log.Printf(err.Error())
 			return
 		}
 
-		log.Infof("stopped")
+		log.Print("stopped")
 	}()
 
 	for {
 		conn, err := listener.AcceptTCP()
 		if err != nil {
-			log.Debugf(err.Error())
+			log.Printf(err.Error())
 			break
 		}
 
@@ -80,21 +88,32 @@ func (client *WebSocksClient) Stop() {
 }
 
 func (client *WebSocksClient) HandleConn(conn *net.TCPConn) {
+	log.Println("new socks5 conn")
+
 	lc, err := NewLocalConn(conn)
 	if err != nil {
-		log.Debug(err.Error())
+		log.Printf(err.Error())
 		return
 	}
 
-	//todo mux
+	host := lc.Host
+
 	if client.Mux {
-		client.DialMuxConn(lc.Host, conn)
+		muxConn, err := client.muxGroup.NewMuxConn(host)
+		if err != nil {
+			log.Printf(err.Error())
+			return
+		}
+
+		log.Printf("created #%v", muxConn)
+
+		muxConn.Run(conn)
 		return
 	}
 
-	ws, err := client.DialWebSocket(core.NewHostHeader(lc.Host))
+	ws, err := client.DialWebSocket(core.NewHostHeader(host))
 	if err != nil {
-		log.Errorf(err.Error())
+		log.Printf(err.Error())
 		return
 	}
 
@@ -109,8 +128,5 @@ func (client *WebSocksClient) DialWebSocket(header map[string][]string) (ws *cor
 	}
 
 	ws = core.NewWebSocket(wsConn, client.Stats)
-	//client.connMutex.Lock()
-	//client.wsConns = append(client.wsConns, ws)
-	//client.connMutex.Unlock()
 	return
 }
