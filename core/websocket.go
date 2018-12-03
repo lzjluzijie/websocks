@@ -7,6 +7,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+var ErrWebSocketClosed = errors.New("websocket closed")
+
 type WebSocket struct {
 	conn *websocket.Conn
 	buf  []byte
@@ -28,7 +30,7 @@ func NewWebSocket(conn *websocket.Conn, stats *Stats) (ws *WebSocket) {
 
 func (ws *WebSocket) Read(p []byte) (n int, err error) {
 	if ws.closed == true {
-		return 0, errors.New("websocket closed")
+		return 0, ErrWebSocketClosed
 	}
 
 	if len(ws.buf) == 0 {
@@ -51,7 +53,7 @@ func (ws *WebSocket) Read(p []byte) (n int, err error) {
 
 func (ws *WebSocket) Write(p []byte) (n int, err error) {
 	if ws.closed == true {
-		return 0, errors.New("websocket closed")
+		return 0, ErrWebSocketClosed
 	}
 
 	err = ws.conn.WriteMessage(websocket.BinaryMessage, p)
@@ -68,7 +70,7 @@ func (ws *WebSocket) Write(p []byte) (n int, err error) {
 }
 
 func (ws *WebSocket) Close() (err error) {
-	ws.conn.Close()
 	ws.closed = true
+	err = ws.conn.Close()
 	return
 }

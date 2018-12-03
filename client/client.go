@@ -107,7 +107,7 @@ func (client *WebSocksClient) HandleConn(conn *net.TCPConn) {
 		}
 
 		//debug log
-		log.Printf("created new mux conn: %x", muxConn.ID)
+		log.Printf("created new mux conn: %x %s", muxConn.ID, host)
 
 		muxConn.Run(conn)
 		return

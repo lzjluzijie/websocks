@@ -54,7 +54,7 @@ func (group *Group) Handle(m *Message) {
 			//debug log
 			err := errors.New(fmt.Sprintf("conn does not exist: %x", m.ConnID))
 			log.Println(err.Error())
-			log.Println(m)
+			log.Printf("%X %X %X %d", m.Method, m.ConnID, m.MessageID, m.Length)
 			return
 		}
 
@@ -76,7 +76,9 @@ func (group *Group) AddConn(conn *Conn) {
 }
 
 func (group *Group) DeleteConn(id uint32) {
+	group.connMapMutex.Lock()
 	delete(group.connMap, id)
+	group.connMapMutex.Unlock()
 	return
 }
 
@@ -119,12 +121,11 @@ func (group *Group) Listen(muxWS *MuxWebSocket) {
 		for {
 			m, err := muxWS.Receive()
 			if err != nil {
-				log.Printf(err.Error())
+				log.Println(err.Error())
 				return
 			}
 
 			go group.Handle(m)
 		}
-		return
 	}()
 }
