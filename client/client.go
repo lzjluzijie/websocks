@@ -88,7 +88,8 @@ func (client *WebSocksClient) Stop() {
 }
 
 func (client *WebSocksClient) HandleConn(conn *net.TCPConn) {
-	log.Println("new socks5 conn")
+	//debug log
+	//log.Println("new socks5 conn")
 
 	lc, err := NewLocalConn(conn)
 	if err != nil {
@@ -105,7 +106,8 @@ func (client *WebSocksClient) HandleConn(conn *net.TCPConn) {
 			return
 		}
 
-		log.Printf("created #%v", muxConn)
+		//debug log
+		log.Printf("created new mux conn: %x %s", muxConn.ID, host)
 
 		muxConn.Run(conn)
 		return

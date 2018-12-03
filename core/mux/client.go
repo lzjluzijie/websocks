@@ -1,11 +1,9 @@
 package mux
 
-import "math/rand"
-
 //NewMuxConn creates a new mux connection for client
 func (group *Group) NewMuxConn(host string) (conn *Conn, err error) {
 	conn = &Conn{
-		ID:            rand.Uint32(),
+		ID:            group.NextConnID(),
 		wait:          make(chan int),
 		sendMessageID: new(uint32),
 		group:         group,
@@ -24,6 +22,6 @@ func (group *Group) NewMuxConn(host string) (conn *Conn, err error) {
 		return
 	}
 
-	group.Conns = append(group.Conns, conn)
+	group.AddConn(conn)
 	return
 }

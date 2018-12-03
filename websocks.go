@@ -3,11 +3,10 @@ package main
 import (
 	"errors"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"runtime"
-
-	"log"
 
 	"github.com/lzjluzijie/websocks/client"
 	"github.com/lzjluzijie/websocks/core"
@@ -23,7 +22,7 @@ func main() {
 			todo better log
 			todo better stats
 		*/
-		Version:     "0.15.0",
+		Version:     "0.15.1",
 		Usage:       "A secure proxy based on WebSocket.",
 		Description: "websocks.org",
 		Author:      "Halulu",
@@ -207,6 +206,23 @@ func main() {
 			},
 		},
 	}
+
+	////pprof debug
+	//go func() {
+	//	f, err := os.Create(fmt.Sprintf("%d.prof", time.Now().Unix()))
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//
+	//	err = pprof.StartCPUProfile(f)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//
+	//	time.Sleep(time.Second * 30)
+	//	pprof.StopCPUProfile()
+	//	os.Exit(0)
+	//}()
 
 	err := app.Run(os.Args)
 	if err != nil {
