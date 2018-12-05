@@ -13,6 +13,8 @@ type Group struct {
 
 	MuxWSs []*MuxWebSocket
 
+	sendMessageChan chan *Message
+
 	connMap      map[uint32]*Conn
 	connMapMutex sync.RWMutex
 
@@ -24,18 +26,15 @@ type Group struct {
 //false: server group
 func NewGroup(client bool) (group *Group) {
 	group = &Group{
-		client:  client,
-		connMap: make(map[uint32]*Conn),
+		client:          client,
+		connMap:         make(map[uint32]*Conn),
+		sendMessageChan: make(chan *Message, 1911),
 	}
 	return
 }
 
 func (group *Group) Send(m *Message) (err error) {
-	//todo
-	for group.MuxWSs != nil {
-		err = group.MuxWSs[0].Send(m)
-		return
-	}
+	group.sendMessageChan <- m
 	return
 }
 
@@ -109,7 +108,7 @@ func (group *Group) NextConnID() (id uint32) {
 	return
 }
 
-func (group *Group) AddMuxWS(muxWS *MuxWebSocket) (err error) {
+func (group *Group) AddMuxWS(muxWS *MuxWebSocket) {
 	muxWS.group = group
 	group.MuxWSs = append(group.MuxWSs, muxWS)
 	group.Listen(muxWS)
@@ -126,6 +125,17 @@ func (group *Group) Listen(muxWS *MuxWebSocket) {
 			}
 
 			go group.Handle(m)
+		}
+	}()
+
+	go func() {
+		for {
+			m := <-group.sendMessageChan
+			err := muxWS.Send(m)
+			if err != nil {
+				log.Println(err.Error())
+				return
+			}
 		}
 	}()
 }

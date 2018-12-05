@@ -65,14 +65,14 @@ func (conn *Conn) Read(p []byte) (n int, err error) {
 }
 
 func (conn *Conn) HandleMessage(m *Message) (err error) {
-	if conn.closed {
-		return ErrConnClosed
-	}
-
 	//debug log
 	//log.Printf("handle message %d %d", m.ConnID, m.MessageID)
 
 	for {
+		if conn.closed {
+			return ErrConnClosed
+		}
+
 		if conn.receiveMessageID == m.MessageID {
 			conn.mutex.Lock()
 			conn.buf = append(conn.buf, m.Data...)
@@ -100,6 +100,7 @@ func (conn *Conn) Run(c *net.TCPConn) {
 		_, err := io.Copy(c, conn)
 		if err != nil {
 			conn.Close()
+			c.Close()
 			log.Printf(err.Error())
 		}
 	}()
@@ -107,6 +108,7 @@ func (conn *Conn) Run(c *net.TCPConn) {
 	_, err := io.Copy(conn, c)
 	if err != nil {
 		conn.Close()
+		c.Close()
 		log.Printf(err.Error())
 	}
 

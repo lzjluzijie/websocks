@@ -45,7 +45,7 @@ func (server *WebSocksServer) HandleWebSocket(w http.ResponseWriter, r *http.Req
 
 	//mux
 	//todo multiple clients
-	if r.Header.Get("WebSocks-Mux") == "v0.15" {
+	if r.Header.Get("WebSocks-Mux") == "v0.16" {
 		if server.muxGroup == nil {
 			server.muxGroup = mux.NewGroup(false)
 		}

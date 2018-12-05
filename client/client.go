@@ -37,14 +37,13 @@ func (client *WebSocksClient) Run() (err error) {
 		log.Println("group created")
 		go func() {
 			//todo
-			for {
-				if len(client.muxGroup.MuxWSs) == 0 {
-					err := client.OpenMux()
-					if err != nil {
-						log.Printf(err.Error())
-						continue
-					}
+			for len(client.muxGroup.MuxWSs) <= 8 {
+				err := client.OpenMux()
+				if err != nil {
+					log.Printf(err.Error())
+					continue
 				}
+
 				//这个弱智BUG折腾了我一天
 				time.Sleep(time.Second)
 			}
