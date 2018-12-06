@@ -46,6 +46,5 @@ func (group *Group) ServerAcceptDial(m *Message) (err error) {
 	log.Printf("Accepted mux conn: %x, %s", conn.ID, host)
 
 	conn.Run(tcpConn)
-	return err
 	return
 }

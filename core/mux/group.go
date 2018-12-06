@@ -28,7 +28,7 @@ func NewGroup(client bool) (group *Group) {
 	group = &Group{
 		client:          client,
 		connMap:         make(map[uint32]*Conn),
-		sendMessageChan: make(chan *Message, 1911),
+		sendMessageChan: make(chan *Message, 8),
 	}
 	return
 }

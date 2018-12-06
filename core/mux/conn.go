@@ -68,7 +68,6 @@ func (conn *Conn) Read(p []byte) (n int, err error) {
 }
 
 func (conn *Conn) HandleMessage(m *Message) (err error) {
-	log.Printf("%d: %d %d", conn.ID, m.MessageID, conn.receiveMessageNext)
 	if conn.closed {
 		return ErrConnClosed
 	}
@@ -76,34 +75,38 @@ func (conn *Conn) HandleMessage(m *Message) (err error) {
 	//debug log
 	//log.Printf("handle message %d %d", m.ConnID, m.MessageID)
 
+	conn.messagesMutex.Lock()
+	log.Printf("%d: %d %d", conn.ID, m.MessageID, conn.receiveMessageNext)
+
+	//m.MessageID should >= conn.receiveMessageNext
 	if m.MessageID < conn.receiveMessageNext {
 		err = errors.New("invalid message id")
+		conn.messagesMutex.Unlock()
 		return
 	}
 
+	//if m.MessageID = conn.receiveMessageNext
+	//append data from messages to buf until message == nil
 	if m.MessageID == conn.receiveMessageNext {
 		conn.bufMutex.Lock()
-		conn.messagesMutex.Lock()
 		conn.buf = append(conn.buf, m.Data...)
 		conn.receiveMessageNext++
 		for _, m := range conn.messages {
 			if m == nil {
-				conn.messages = conn.messages[1:]
-				continue
+				return
 			}
-
 			conn.buf = append(conn.buf, m.Data...)
+			conn.messages = conn.messages[1:]
 			conn.receiveMessageNext++
 		}
-		conn.messagesMutex.Unlock()
 		conn.bufMutex.Unlock()
+		conn.messagesMutex.Unlock()
 
 		close(conn.wait)
 		conn.wait = make(chan int)
 		return
 	}
 
-	conn.messagesMutex.Lock()
 	i := m.MessageID - conn.receiveMessageNext
 	if i < uint32(len(conn.messages)) {
 		conn.messages[i] = m
@@ -147,6 +150,9 @@ func (conn *Conn) Run(c *net.TCPConn) {
 }
 
 func (conn *Conn) Close() (err error) {
+	conn.closed = true
+	//close(conn.wait)
+
 	go func() {
 		m := &Message{
 			Method: MessageMethodClose,
@@ -160,7 +166,5 @@ func (conn *Conn) Close() (err error) {
 	}()
 
 	conn.group.DeleteConn(conn.ID)
-	//close(conn.wait)
-	conn.closed = true
 	return
 }
