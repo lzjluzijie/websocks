@@ -39,7 +39,7 @@ func (conn *Conn) Write(p []byte) (n int, err error) {
 		Length:    uint32(len(p)),
 		Data:      p,
 	}
-	log.Println(conn.sendMessageNext)
+	log.Printf("%d: %d", conn.ID, conn.sendMessageNext)
 	conn.sendMessageNext++
 
 	err = conn.group.Send(m)
@@ -68,7 +68,7 @@ func (conn *Conn) Read(p []byte) (n int, err error) {
 }
 
 func (conn *Conn) HandleMessage(m *Message) (err error) {
-	log.Printf("%d %d", m.MessageID, conn.receiveMessageNext)
+	log.Printf("%d: %d %d", conn.ID, m.MessageID, conn.receiveMessageNext)
 	if conn.closed {
 		return ErrConnClosed
 	}
@@ -86,9 +86,9 @@ func (conn *Conn) HandleMessage(m *Message) (err error) {
 		conn.messagesMutex.Lock()
 		conn.buf = append(conn.buf, m.Data...)
 		conn.receiveMessageNext++
-		for i, m := range conn.messages {
+		for _, m := range conn.messages {
 			if m == nil {
-				conn.messages = conn.messages[i:]
+				conn.messages = conn.messages[1:]
 				continue
 			}
 
@@ -147,6 +147,18 @@ func (conn *Conn) Run(c *net.TCPConn) {
 }
 
 func (conn *Conn) Close() (err error) {
+	go func() {
+		m := &Message{
+			Method: MessageMethodClose,
+			ConnID: conn.ID,
+		}
+
+		err = conn.group.Send(m)
+		if err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
 	conn.group.DeleteConn(conn.ID)
 	//close(conn.wait)
 	conn.closed = true

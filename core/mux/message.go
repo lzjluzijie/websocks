@@ -10,6 +10,7 @@ import (
 const (
 	MessageMethodData = iota
 	MessageMethodDial
+	MessageMethodClose
 )
 
 //MessageHeadLength = 13

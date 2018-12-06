@@ -41,8 +41,30 @@ func (group *Group) Send(m *Message) (err error) {
 func (group *Group) Handle(m *Message) {
 	//log.Printf("group received %#v", m)
 
-	if !group.client && m.Method != MessageMethodData {
-		err := group.ServerHandleMessage(m)
+	//Server handle new mux conn request
+	if !group.client && m.Method == MessageMethodDial {
+		err := group.ServerAcceptDial(m)
+		if err != nil {
+			log.Println(err.Error())
+		}
+		return
+	}
+
+	if m.Method == MessageMethodClose {
+		conn := group.GetConn(m.ConnID)
+		if conn == nil {
+			err := errors.New(fmt.Sprintf("conn does not exist: %d", m.ConnID))
+			log.Println(err.Error())
+			return
+		}
+
+		if conn.closed {
+			err := errors.New(fmt.Sprintf("conn already closed: %d", m.ConnID))
+			log.Println(err.Error())
+			return
+		}
+
+		err := conn.Close()
 		if err != nil {
 			log.Println(err.Error())
 		}
@@ -50,13 +72,12 @@ func (group *Group) Handle(m *Message) {
 	}
 
 	//get conn and send message
-	//for {
 	conn := group.GetConn(m.ConnID)
 	if conn == nil {
 		//debug log
 		err := errors.New(fmt.Sprintf("conn does not exist: %x", m.ConnID))
 		log.Println(err.Error())
-		log.Printf("%X %X %X %d", m.Method, m.ConnID, m.MessageID, m.Length)
+		//log.Printf("%X %X %X %d", m.Method, m.ConnID, m.MessageID, m.Length)
 		return
 	}
 
@@ -66,7 +87,6 @@ func (group *Group) Handle(m *Message) {
 		log.Println(err.Error())
 		return
 	}
-	//}
 	return
 }
 

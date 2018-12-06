@@ -1,50 +1,51 @@
 package mux
 
 import (
+	"fmt"
 	"log"
 	"net"
+
+	"github.com/pkg/errors"
 )
 
-//ServerHandleMessage is a server group function
-func (group *Group) ServerHandleMessage(m *Message) (err error) {
-	//accept new conn
-	if m.Method == MessageMethodDial {
-		host := string(m.Data)
+//ServerAcceptDial
+func (group *Group) ServerAcceptDial(m *Message) (err error) {
+	if m.Method != MessageMethodDial {
+		err = errors.New(fmt.Sprintf("wrong method: %d", m.Method))
+		return
+	}
 
-		//debug log
-		//log.Printf("start to dial %s", host)
+	host := string(m.Data)
 
-		conn := &Conn{
-			ID:    m.ConnID,
-			wait:  make(chan int),
-			group: group,
+	conn := &Conn{
+		ID:    m.ConnID,
+		wait:  make(chan int),
+		group: group,
 
-			sendMessageNext:    1,
-			receiveMessageNext: 1,
-		}
+		sendMessageNext:    1,
+		receiveMessageNext: 1,
+	}
 
-		//add to group before receive data
-		group.AddConn(conn)
+	group.AddConn(conn)
 
-		tcpAddr, err := net.ResolveTCPAddr("tcp", host)
-		if err != nil {
-			conn.Close()
-			log.Printf(err.Error())
-			return err
-		}
-
-		tcpConn, err := net.DialTCP("tcp", nil, tcpAddr)
-		if err != nil {
-			conn.Close()
-			log.Printf(err.Error())
-			return err
-		}
-
-		//debug log
-		log.Printf("Accepted mux conn: %x, %s", conn.ID, host)
-
-		conn.Run(tcpConn)
+	tcpAddr, err := net.ResolveTCPAddr("tcp", host)
+	if err != nil {
+		conn.Close()
+		log.Printf(err.Error())
 		return err
 	}
+
+	tcpConn, err := net.DialTCP("tcp", nil, tcpAddr)
+	if err != nil {
+		conn.Close()
+		log.Printf(err.Error())
+		return err
+	}
+
+	//debug log
+	log.Printf("Accepted mux conn: %x, %s", conn.ID, host)
+
+	conn.Run(tcpConn)
+	return err
 	return
 }
