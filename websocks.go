@@ -2,14 +2,11 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"runtime"
-	"runtime/pprof"
-	"time"
 
 	"github.com/lzjluzijie/websocks/client"
 	"github.com/lzjluzijie/websocks/core"
@@ -20,22 +17,22 @@ import (
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	//pprof debug
-	go func() {
-		f, err := os.Create(fmt.Sprintf("%d.prof", time.Now().Unix()))
-		if err != nil {
-			panic(err)
-		}
-
-		err = pprof.StartCPUProfile(f)
-		if err != nil {
-			panic(err)
-		}
-
-		time.Sleep(time.Second * 60)
-		pprof.StopCPUProfile()
-		os.Exit(0)
-	}()
+	////pprof debug
+	//go func() {
+	//	f, err := os.Create(fmt.Sprintf("%d.prof", time.Now().Unix()))
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//
+	//	err = pprof.StartCPUProfile(f)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//
+	//	time.Sleep(time.Second * 60)
+	//	pprof.StopCPUProfile()
+	//	os.Exit(0)
+	//}()
 
 	app := cli.App{
 		Name: "WebSocks",

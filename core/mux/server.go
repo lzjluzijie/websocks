@@ -15,10 +15,12 @@ func (group *Group) ServerHandleMessage(m *Message) (err error) {
 		//log.Printf("start to dial %s", host)
 
 		conn := &Conn{
-			ID:            m.ConnID,
-			wait:          make(chan int),
-			sendMessageID: new(uint32),
-			group:         group,
+			ID:    m.ConnID,
+			wait:  make(chan int),
+			group: group,
+
+			sendMessageNext:    1,
+			receiveMessageNext: 1,
 		}
 
 		//add to group before receive data

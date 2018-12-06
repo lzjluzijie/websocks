@@ -42,28 +42,31 @@ func (group *Group) Handle(m *Message) {
 	//log.Printf("group received %#v", m)
 
 	if !group.client && m.Method != MessageMethodData {
-		group.ServerHandleMessage(m)
+		err := group.ServerHandleMessage(m)
+		if err != nil {
+			log.Println(err.Error())
+		}
 		return
 	}
 
 	//get conn and send message
-	for {
-		conn := group.GetConn(m.ConnID)
-		if conn == nil {
-			//debug log
-			err := errors.New(fmt.Sprintf("conn does not exist: %x", m.ConnID))
-			log.Println(err.Error())
-			log.Printf("%X %X %X %d", m.Method, m.ConnID, m.MessageID, m.Length)
-			return
-		}
-
-		//this err should be nil or ErrConnClosed
-		err := conn.HandleMessage(m)
-		if err != nil {
-			log.Println(err.Error())
-			return
-		}
+	//for {
+	conn := group.GetConn(m.ConnID)
+	if conn == nil {
+		//debug log
+		err := errors.New(fmt.Sprintf("conn does not exist: %x", m.ConnID))
+		log.Println(err.Error())
+		log.Printf("%X %X %X %d", m.Method, m.ConnID, m.MessageID, m.Length)
+		return
 	}
+
+	//this err should be nil or ErrConnClosed
+	err := conn.HandleMessage(m)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	//}
 	return
 }
 

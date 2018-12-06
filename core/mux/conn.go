@@ -6,24 +6,25 @@ import (
 	"log"
 	"net"
 	"sync"
-	"sync/atomic"
 )
 
 var ErrConnClosed = errors.New("mux conn closed")
 
 type Conn struct {
+	closed bool
+
 	ID uint32
 
 	group *Group
 
-	mutex sync.Mutex
-	buf   []byte
-	wait  chan int
+	buf           []byte
+	bufMutex      sync.Mutex
+	wait          chan int
+	messages      []*Message
+	messagesMutex sync.Mutex
 
-	closed bool
-
-	receiveMessageID uint32
-	sendMessageID    *uint32
+	receiveMessageNext uint32
+	sendMessageNext    uint32
 }
 
 func (conn *Conn) Write(p []byte) (n int, err error) {
@@ -34,10 +35,12 @@ func (conn *Conn) Write(p []byte) (n int, err error) {
 	m := &Message{
 		Method:    MessageMethodData,
 		ConnID:    conn.ID,
-		MessageID: conn.SendMessageID(),
+		MessageID: conn.sendMessageNext,
 		Length:    uint32(len(p)),
 		Data:      p,
 	}
+	log.Println(conn.sendMessageNext)
+	conn.sendMessageNext++
 
 	err = conn.group.Send(m)
 	if err != nil {
@@ -56,42 +59,70 @@ func (conn *Conn) Read(p []byte) (n int, err error) {
 		<-conn.wait
 	}
 
-	conn.mutex.Lock()
+	conn.bufMutex.Lock()
 	//log.Printf("%d buf: %v",conn.ID, conn.buf)
 	n = copy(p, conn.buf)
 	conn.buf = conn.buf[n:]
-	conn.mutex.Unlock()
+	conn.bufMutex.Unlock()
 	return
 }
 
 func (conn *Conn) HandleMessage(m *Message) (err error) {
+	log.Printf("%d %d", m.MessageID, conn.receiveMessageNext)
+	if conn.closed {
+		return ErrConnClosed
+	}
+
 	//debug log
 	//log.Printf("handle message %d %d", m.ConnID, m.MessageID)
 
-	for {
-		if conn.closed {
-			return ErrConnClosed
-		}
-
-		if conn.receiveMessageID == m.MessageID {
-			conn.mutex.Lock()
-			conn.buf = append(conn.buf, m.Data...)
-			conn.receiveMessageID++
-			close(conn.wait)
-			conn.wait = make(chan int)
-			conn.mutex.Unlock()
-			//debug log
-			//log.Printf("handled message %d %d", m.ConnID, m.MessageID)
-			return
-		}
-		<-conn.wait
+	if m.MessageID < conn.receiveMessageNext {
+		err = errors.New("invalid message id")
+		return
 	}
-	return
-}
 
-func (conn *Conn) SendMessageID() (id uint32) {
-	id = atomic.LoadUint32(conn.sendMessageID)
-	atomic.AddUint32(conn.sendMessageID, 1)
+	if m.MessageID == conn.receiveMessageNext {
+		conn.bufMutex.Lock()
+		conn.messagesMutex.Lock()
+		conn.buf = append(conn.buf, m.Data...)
+		conn.receiveMessageNext++
+		for i, m := range conn.messages {
+			if m == nil {
+				conn.messages = conn.messages[i:]
+				continue
+			}
+
+			conn.buf = append(conn.buf, m.Data...)
+			conn.receiveMessageNext++
+		}
+		conn.messagesMutex.Unlock()
+		conn.bufMutex.Unlock()
+
+		close(conn.wait)
+		conn.wait = make(chan int)
+		return
+	}
+
+	conn.messagesMutex.Lock()
+	i := m.MessageID - conn.receiveMessageNext
+	if i < uint32(len(conn.messages)) {
+		conn.messages[i] = m
+		conn.messagesMutex.Unlock()
+		return
+	}
+
+	if i == uint32(len(conn.messages)) {
+		conn.messages = append(conn.messages, m)
+		conn.messagesMutex.Unlock()
+		return
+	}
+
+	d := i - uint32(len(conn.messages)) + 1
+	log.Printf("%d %d %d %d %d", i, m.MessageID, conn.receiveMessageNext, uint32(len(conn.messages)), d)
+	s := make([]*Message, d)
+	s[d-1] = m
+	conn.messages = append(conn.messages, s...)
+	conn.messagesMutex.Unlock()
 	return
 }
 
