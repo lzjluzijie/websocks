@@ -82,12 +82,7 @@ func (group *Group) Handle(m *Message) {
 		return
 	}
 
-	//this err should be nil or ErrConnClosed
-	err := conn.HandleMessage(m)
-	if err != nil {
-		log.Println(err.Error())
-		return
-	}
+	conn.HandleMessage(m)
 	return
 }
 

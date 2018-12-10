@@ -17,9 +17,10 @@ type Conn struct {
 
 	group *Group
 
-	buf      []byte
-	bufMutex sync.Mutex
-	wait     chan int
+	buf         []byte
+	bufMutex    sync.Mutex
+	wait        chan int
+	handleMutex sync.Mutex
 
 	receiveMessageNext uint32
 	sendMessageNext    uint32
@@ -65,7 +66,7 @@ func (conn *Conn) Read(p []byte) (n int, err error) {
 	return
 }
 
-func (conn *Conn) HandleMessage(m *Message) (err error) {
+func (conn *Conn) HandleMessage(m *Message) {
 	//debug log
 	//log.Printf("handle message %d %d", m.ConnID, m.MessageID)
 
@@ -73,20 +74,23 @@ func (conn *Conn) HandleMessage(m *Message) (err error) {
 
 	for {
 		if conn.closed {
-			return ErrConnClosed
+			return
 		}
 
+		conn.handleMutex.Lock()
 		if conn.receiveMessageNext == m.MessageID {
 			conn.bufMutex.Lock()
 			conn.buf = append(conn.buf, m.Data...)
-			conn.receiveMessageNext++
+			conn.receiveMessageNext = m.MessageID + 1
 			conn.bufMutex.Unlock()
 			close(conn.wait)
 			conn.wait = make(chan int)
+			conn.handleMutex.Unlock()
 			//debug log
 			//log.Printf("handled message %d %d", m.ConnID, m.MessageID)
 			return
 		}
+		conn.handleMutex.Unlock()
 		<-conn.wait
 	}
 	return
