@@ -11,7 +11,8 @@ import (
 type Group struct {
 	client bool
 
-	MuxWSs []*MuxWebSocket
+	MuxWSs     []*MuxWebSocket
+	muxWSMutex sync.Mutex
 
 	sendMessageChan chan *Message
 
@@ -135,6 +136,21 @@ func (group *Group) AddMuxWS(muxWS *MuxWebSocket) {
 	muxWS.group = group
 	group.MuxWSs = append(group.MuxWSs, muxWS)
 	group.Listen(muxWS)
+	return
+}
+
+func (group *Group) DeleteMuxWS(id uint32) {
+	group.muxWSMutex.Lock()
+	for i, muxWS := range group.MuxWSs {
+		if muxWS.ID == id {
+			group.MuxWSs = append(group.MuxWSs[:i], group.MuxWSs[i+1:]...)
+			group.muxWSMutex.Unlock()
+			return
+		}
+	}
+
+	group.muxWSMutex.Unlock()
+	log.Printf("Cannot find muxWS: %d", id)
 	return
 }
 

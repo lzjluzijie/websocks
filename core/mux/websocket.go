@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"log"
+	"math/rand"
 	"sync"
 
 	"github.com/lzjluzijie/websocks/core"
@@ -12,6 +13,7 @@ import (
 type MuxWebSocket struct {
 	*core.WebSocket
 
+	ID    uint32
 	group *Group
 
 	sMutex sync.Mutex
@@ -20,6 +22,7 @@ type MuxWebSocket struct {
 
 func NewMuxWebSocket(ws *core.WebSocket) (muxWS *MuxWebSocket) {
 	muxWS = &MuxWebSocket{
+		ID:        rand.Uint32(),
 		WebSocket: ws,
 	}
 	return

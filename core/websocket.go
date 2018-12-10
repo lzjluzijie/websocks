@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -38,6 +39,10 @@ func (ws *WebSocket) Read(p []byte) (n int, err error) {
 		//log.Println("empty buf, waiting")
 		_, ws.buf, err = ws.conn.ReadMessage()
 		if err != nil {
+			e := ws.Close()
+			if e != nil {
+				log.Println(err.Error())
+			}
 			return
 		}
 	}
@@ -58,6 +63,10 @@ func (ws *WebSocket) Write(p []byte) (n int, err error) {
 
 	err = ws.conn.WriteMessage(websocket.BinaryMessage, p)
 	if err != nil {
+		e := ws.Close()
+		if e != nil {
+			log.Println(err.Error())
+		}
 		return
 	}
 
