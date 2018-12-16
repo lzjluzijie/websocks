@@ -1,8 +1,6 @@
 package client
 
 import (
-	"log"
-
 	"github.com/lzjluzijie/websocks/core"
 	"github.com/lzjluzijie/websocks/core/mux"
 )
@@ -21,6 +19,6 @@ func (client *WebSocksClient) OpenMux() (err error) {
 	muxWS := mux.NewMuxWebSocket(ws)
 	client.muxGroup.AddMuxWS(muxWS)
 
-	log.Printf("new mux websocket")
+	//log.Printf("new mux websocket")
 	return
 }

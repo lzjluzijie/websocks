@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"sync"
 	"time"
 )
@@ -54,14 +55,14 @@ func (group *Group) Handle(m *Message) {
 	if m.Method == MessageMethodClose {
 		conn := group.GetConn(m.ConnID)
 		if conn == nil {
-			err := errors.New(fmt.Sprintf("conn does not exist: %d", m.ConnID))
-			log.Println(err.Error())
+			//err := errors.New(fmt.Sprintf("conn does not exist: %d", m.ConnID))
+			//log.Println(err.Error())
 			return
 		}
 
 		if conn.closed {
-			err := errors.New(fmt.Sprintf("conn already closed: %d", m.ConnID))
-			log.Println(err.Error())
+			//err := errors.New(fmt.Sprintf("conn already closed: %d", m.ConnID))
+			//log.Println(err.Error())
 			return
 		}
 
@@ -120,10 +121,11 @@ func (group *Group) GetConn(id uint32) (conn *Conn) {
 }
 
 func (group *Group) NextConnID() (id uint32) {
-	group.connIDMutex.Lock()
-	group.connID++
-	id = group.connID
-	group.connIDMutex.Unlock()
+	id = rand.Uint32()
+	//group.connIDMutex.Lock()
+	//group.connID++
+	//id = group.connID
+	//group.connIDMutex.Unlock()
 	return
 }
 

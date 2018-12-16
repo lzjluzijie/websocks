@@ -1,6 +1,8 @@
 package mux
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"errors"
 	"io"
 	"log"
@@ -17,8 +19,7 @@ type Conn struct {
 
 	group *Group
 
-	buf         []byte
-	bufMutex    sync.Mutex
+	buf         bytes.Buffer
 	wait        chan int
 	handleMutex sync.Mutex
 
@@ -28,7 +29,8 @@ type Conn struct {
 
 func (conn *Conn) Write(p []byte) (n int, err error) {
 	if conn.closed {
-		return 0, ErrConnClosed
+		return 0, io.EOF
+		//return 0, ErrConnClosed
 	}
 
 	m := &Message{
@@ -38,7 +40,7 @@ func (conn *Conn) Write(p []byte) (n int, err error) {
 		Length:    uint32(len(p)),
 		Data:      p,
 	}
-	log.Printf("%d: %d", conn.ID, conn.sendMessageNext)
+	//log.Printf("%d: %d", conn.ID, conn.sendMessageNext)
 	conn.sendMessageNext++
 
 	err = conn.group.Send(m)
@@ -50,19 +52,16 @@ func (conn *Conn) Write(p []byte) (n int, err error) {
 
 func (conn *Conn) Read(p []byte) (n int, err error) {
 	if conn.closed {
-		return 0, ErrConnClosed
+		return 0, io.EOF
+		//return 0, ErrConnClosed
 	}
 
-	if len(conn.buf) == 0 {
+	if conn.buf.Len() == 0 {
 		//log.Printf("%d buf is 0, waiting", conn.ID)
 		<-conn.wait
 	}
 
-	conn.bufMutex.Lock()
-	//log.Printf("%d buf: %v",conn.ID, conn.buf)
-	n = copy(p, conn.buf)
-	conn.buf = conn.buf[n:]
-	conn.bufMutex.Unlock()
+	n, err = conn.buf.Read(p)
 	return
 }
 
@@ -70,7 +69,7 @@ func (conn *Conn) HandleMessage(m *Message) {
 	//debug log
 	//log.Printf("handle message %d %d", m.ConnID, m.MessageID)
 
-	log.Printf("%d: %d %d", conn.ID, m.MessageID, conn.receiveMessageNext)
+	//log.Printf("%d: %d %d", conn.ID, m.MessageID, conn.receiveMessageNext)
 
 	for {
 		if conn.closed {
@@ -79,10 +78,8 @@ func (conn *Conn) HandleMessage(m *Message) {
 
 		conn.handleMutex.Lock()
 		if conn.receiveMessageNext == m.MessageID {
-			conn.bufMutex.Lock()
-			conn.buf = append(conn.buf, m.Data...)
+			conn.buf.Write(m.Data)
 			conn.receiveMessageNext = m.MessageID + 1
-			conn.bufMutex.Unlock()
 			close(conn.wait)
 			conn.wait = make(chan int)
 			conn.handleMutex.Unlock()
@@ -98,18 +95,24 @@ func (conn *Conn) HandleMessage(m *Message) {
 
 func (conn *Conn) Run(c *net.TCPConn) {
 	go func() {
-		_, err := io.Copy(c, conn)
+		h := sha256.New()
+		r := io.TeeReader(conn, h)
+		_, err := io.Copy(c, r)
+		conn.Close()
+		c.Close()
+		log.Printf("%x write: %x", conn.ID, h.Sum(nil))
 		if err != nil {
-			conn.Close()
-			c.Close()
 			log.Printf(err.Error())
 		}
 	}()
 
-	_, err := io.Copy(conn, c)
+	h := sha256.New()
+	r := io.TeeReader(c, h)
+	_, err := io.Copy(conn, r)
+	conn.Close()
+	c.Close()
+	log.Printf("%x read: %x", conn.ID, h.Sum(nil))
 	if err != nil {
-		conn.Close()
-		c.Close()
 		log.Printf(err.Error())
 	}
 
